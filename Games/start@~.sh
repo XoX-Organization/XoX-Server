@@ -122,6 +122,7 @@ updateJavaVersion() {
     printHeader "Setting Java Version"
 
     JAVA_PATH=$(update-alternatives --list java | grep "$JAVA_VERSION")
+    echo -e "$JAVA_VERSION -> \"$JAVA_PATH\""
 
     if [ -z "$JAVA_PATH" ];
     then
@@ -150,15 +151,15 @@ startScreenInstance() {
     shift
     COMMAND="$@"
 
+    echo -e "\n\nCommand Arguments:"
+    echo -e "$COMMAND"
+
     echo -e "Tips:"
     echo -e "To $COLOR_A view $COLOR_RESET the instances,         $COLOR_A screen -ls $COLOR_RESET"
     echo -e "To $COLOR_A attach $COLOR_RESET to the instance,     $COLOR_A screen -r $SCREEN_NAME $COLOR_RESET"
     echo -e "To $COLOR_A detach $COLOR_RESET from the instance,   $COLOR_A press Ctrl+A then Ctrl+D. $COLOR_RESET"
 
-    echo -e "\n\nCommand Arguments:"
-    echo -e "$COMMAND"
-
-    screen -dm -S "$SCREEN_NAME" bash -c "$COMMAND"
+    screen -dm -S "$SCREEN_NAME" bash -c "$COMMAND; echo -e '\n\nScreen session has been closed. Press Enter to exit.'; read -p ''; exit 0"
 
     echo -e "\n\nInstance has been started in the background."
 }

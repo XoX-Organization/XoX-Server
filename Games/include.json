@@ -1,0 +1,11 @@
+{
+    "symlink": [
+        "start@~.sh",
+        "start@Minecraft.sh",
+        "start@tModLoader.sh",
+        "Minecraft/instance@example.sh",
+        "tModLoader/instance@example.sh"
+    ],
+    "copy": [],
+    "mkdir": ["Minecraft", "tModLoader"]
+}
