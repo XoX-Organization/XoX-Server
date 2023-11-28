@@ -12,7 +12,7 @@ SERVER_PORT="2456"
 
 # Server world name, default is "Dedicated"
 # Use to locate the save world file
-SERVER_WORLD=""
+SERVER_WORLDFILENAME=""
 
 # Server password
 SERVER_PASSWORD="xoxsince2020"

@@ -68,8 +68,8 @@ cd "$SOURCE_PATH"
 
 startScreenInstance "$NAME" "${SOURCE_PATH}/start-tModLoaderServer.sh" \
     -nosteam \
-    -config "$SERVER_CONFIGFILEPATH" \
-    -tmlsavedirectory "$SERVER_SAVEFOLDERPATH" \
+    -config \"$SERVER_CONFIGFILEPATH\" \
+    -tmlsavedirectory \"$SERVER_SAVEFOLDERPATH\" \
     -steamworkshopfolder none
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'

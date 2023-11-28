@@ -58,11 +58,11 @@ ln -sf "$HOME/.config/unity3d/IronGate/Valheim" "./Local"
 ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstance "$NAME" "${SOURCE_PATH}/valheim_server.x86_64" \
-    -name "$SERVER_NAME" \
+startScreenInstance "$NAME" "\"${SOURCE_PATH}/valheim_server.x86_64\"" \
+    -name \"$SERVER_NAME\" \
     -port "$SERVER_PORT" \
-    -password "$SERVER_PASSWORD" \
-    -world "$SERVER_WORLDFILENAME" \
+    -password \"$SERVER_PASSWORD\" \
+    -world \"$SERVER_WORLDFILENAME\" \
     -public 0 \
     -nographics \
     -batchmode \
