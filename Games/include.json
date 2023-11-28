@@ -3,6 +3,7 @@
         "start@~.sh",
         "start@Minecraft.sh",
         "start@tModLoader.sh",
+        "start@Valheim.sh",
         "Minecraft/instance@example.sh",
         "tModLoader/instance@example.sh",
         "Valheim/instance@example.sh"
