@@ -179,3 +179,18 @@ startScreenInstance() {
 
     echo -e "\n\nInstance has been started in the background."
 }
+
+startScreenInstanceWithWindow() {
+    if ! command -v xvfb-run &> /dev/null;
+    then
+        echo -e "\nXvfb is not installed. Performing installation."
+
+        if ! installPackages "xvfb";
+        then
+            exit 1
+        fi
+    fi
+
+    echo -e "\n\nStarting Xvfb screen session."
+    xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" startScreenInstance "$@"
+}
