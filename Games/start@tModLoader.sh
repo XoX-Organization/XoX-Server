@@ -1,7 +1,5 @@
 #!/bin/bash
 source "./start@~.sh"
-
-cd "./tModLoader"
 echo -e "Terraria Server - tModLoader"
 
 APP_ID=1281930
@@ -9,6 +7,11 @@ APP_ID=1281930
 TML_CONFIG=
 TML_SAVE_DIR=
 TML_SOURCE_DIR=
+
+if ! setWorkingDirectory "./tModLoader";
+then
+    exit 1
+fi
 
 findInstances
 

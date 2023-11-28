@@ -1,7 +1,5 @@
 #!/bin/bash
 source "./start@~.sh"
-
-cd "./Valheim"
 echo -e "Valheim Server"
 
 APP_ID=892970
@@ -11,6 +9,11 @@ SERVER_NAME=
 SERVER_PORT=
 SERVER_WORLD=
 SERVER_PASSWORD=
+
+if ! setWorkingDirectory "./Valheim";
+then
+    exit 1
+fi
 
 findInstances
 

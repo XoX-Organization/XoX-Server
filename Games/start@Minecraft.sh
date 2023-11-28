@@ -1,7 +1,5 @@
 #!/bin/bash
 source "./start@~.sh"
-
-cd "./Minecraft"
 echo -e "Minecraft Server"
 
 MINECRAFT_SERVER_SCRIPT=
@@ -16,6 +14,11 @@ acceptEula() {
             "\neula=true" > "$EULA_FILE"
     fi
 }
+
+if ! setWorkingDirectory "./Minecraft";
+then
+    exit 1
+fi
 
 findInstances
 

@@ -31,6 +31,16 @@ printHeader() {
     echo -e "\n"
 }
 
+setWorkingDirectory() {
+    if [ ! -d "$1" ];
+    then
+        echo -e "\nDirectory \"$1\" does not exist."
+        return 1
+    fi
+    cd "$1"
+    echo -e "\nWorking directory set to \"$1\"."
+}
+
 findInstances() {
     # Loop through each folder in current working directory and add them into the array
     while IFS= read -r -d $'\0' file;
