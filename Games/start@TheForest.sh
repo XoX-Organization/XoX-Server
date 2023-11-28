@@ -2,7 +2,7 @@
 source "./start@~.sh"
 echo -e "TheForest Server"
 
-SOURCE_PATH="$STEAM_PATH/steamapps/common/TheForestDedicatedServer"
+SOURCE_PATH="$STEAM_PATH/SteamApps/common/TheForestDedicatedServer"
 
 APP_ID=556450
 APP_PLATFORM="windows"

@@ -2,7 +2,7 @@
 source "./start@~.sh"
 echo -e "Valheim Server"
 
-SOURCE_PATH="$STEAM_PATH/steamapps/common/Valheim"
+SOURCE_PATH="$STEAM_PATH/SteamApps/common/Valheim"
 
 APP_ID=892970
 

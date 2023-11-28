@@ -2,7 +2,7 @@
 source "./start@~.sh"
 echo -e "Terraria Server - tModLoader"
 
-SOURCE_PATH="$STEAM_PATH/steamapps/common/tModLoader"
+SOURCE_PATH="$STEAM_PATH/SteamApps/common/tModLoader"
 
 APP_ID=1281930
 
