@@ -79,10 +79,8 @@ fi
 ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstance "$NAME" "xvfb-run" \
-    --auto-servernum \
-    --server-args="-screen 0 640x480x24:32" \
-    "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
+startScreenInstance "$NAME" xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" \
+    wine "$SOURCE_PATH/TheForestDedicatedServer.exe" \
     -configfilepath "$SERVER_CONFIGFILEPATH" \
     -savefolderpath "$SERVER_SAVEFOLDERPATH" \
     -batchmode \
