@@ -4,8 +4,9 @@
         "start@Minecraft.sh",
         "start@tModLoader.sh",
         "Minecraft/instance@example.sh",
-        "tModLoader/instance@example.sh"
+        "tModLoader/instance@example.sh",
+        "Valheim/instance@example.sh"
     ],
     "copy": [],
-    "mkdir": ["Minecraft", "tModLoader"]
+    "mkdir": ["Minecraft", "tModLoader", "Valheim"]
 }
