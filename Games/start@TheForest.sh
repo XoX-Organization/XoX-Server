@@ -7,9 +7,12 @@ SOURCE_PATH="$STEAM_PATH/SteamApps/common/TheForestDedicatedServer"
 APP_ID=556450
 APP_PLATFORM="windows"
 
+STEAM_USERNAME="anonymous"
+
 # https://steamcommunity.com/sharedfiles/filedetails/?id=907906289
 SERVER_CONFIGFILEPATH=
 SERVER_SAVEFOLDERPATH=
+
 
 if ! setWorkingDirectory "./TheForest";
 then
