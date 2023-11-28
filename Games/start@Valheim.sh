@@ -4,7 +4,9 @@ echo -e "Valheim Server"
 
 SOURCE_PATH="$STEAM_PATH/SteamApps/common/Valheim"
 
-APP_ID=892970
+APP_ID=896660
+
+STEAM_USERNAME="anonymous"
 
 SERVER_NAME=
 SERVER_PORT=
