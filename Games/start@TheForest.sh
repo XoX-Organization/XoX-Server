@@ -3,6 +3,7 @@ source "./start@~.sh"
 echo -e "TheForest Server"
 
 APP_ID=556450
+APP_PLATFORM="windows"
 
 if ! setWorkingDirectory "./TheForest";
 then
