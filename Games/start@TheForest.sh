@@ -65,11 +65,22 @@ then
         exit 1
     fi
 fi
+# Xvfb is required to run the server
+if ! command -v xvfb-run &> /dev/null;
+then
+    echo -e "\nXvfb is not installed. Performing installation."
+
+    if ! installPackages "xvfb";
+    then
+        exit 1
+    fi
+fi
 
 ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstanceWithWindow "$NAME" "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
+startScreenInstanceWithWindow "$NAME" "xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32'" \
+    "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
     -configfilepath "$SERVER_CONFIGFILEPATH" \
     -savefolderpath "$SERVER_SAVEFOLDERPATH" \
     -batchmode \
