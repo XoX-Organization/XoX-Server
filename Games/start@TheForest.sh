@@ -71,7 +71,7 @@ cd "$SOURCE_PATH"
 
 startScreenInstance "$NAME" "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
     -configfilepath "$SERVER_CONFIGFILEPATH" \
-    -savefolderpath "$SERVER_SAVEFOLDERPATH \
+    -savefolderpath "$SERVER_SAVEFOLDERPATH" \
     -batchmode \
     -nographics
 
