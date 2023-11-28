@@ -2,11 +2,12 @@
 source "./start@~.sh"
 echo -e "Terraria Server - tModLoader"
 
+SOURCE_PATH="$STEAM_PATH/steamapps/common/tModLoader"
+
 APP_ID=1281930
 
-TML_CONFIG=
-TML_SAVE_DIR=
-TML_SOURCE_DIR=
+SERVER_CONFIGFILEPATH=
+SERVER_SAVEFOLDERPATH=
 
 if ! setWorkingDirectory "./tModLoader";
 then
@@ -39,7 +40,7 @@ fi
 
 if [[ "$*" == *-noupdate* ]];
 then
-    echo -e "\nSkipping TML update."
+    echo -e "\nSkipping update."
 else
     updateApp
 fi
@@ -47,13 +48,13 @@ fi
 # Copy "enabled.json" to "enabled.json.constant" to prevent tModLoader from updating it
 printHeader "Backing up enabled.json"
 
-if [ ! -e "$TML_SAVE_DIR/Mods/enabled.json.constant" ];
+if [ ! -e "$SERVER_SAVEFOLDERPATH/Mods/enabled.json.constant" ];
 then
-    cp "$TML_SAVE_DIR/Mods/enabled.json" "$TML_SAVE_DIR/Mods/enabled.json.constant"
+    cp "$SERVER_SAVEFOLDERPATH/Mods/enabled.json" "$SERVER_SAVEFOLDERPATH/Mods/enabled.json.constant"
 fi
 
-rm "$TML_SAVE_DIR/Mods/enabled.json"
-cp "$TML_SAVE_DIR/Mods/enabled.json.constant" "$TML_SAVE_DIR/Mods/enabled.json" > /dev/null 2>&1
+rm "$SERVER_SAVEFOLDERPATH/Mods/enabled.json"
+cp "$SERVER_SAVEFOLDERPATH/Mods/enabled.json.constant" "$SERVER_SAVEFOLDERPATH/Mods/enabled.json" > /dev/null 2>&1
 echo -e "Done."
 
 if checkScreenInstanceExists "$NAME";
@@ -61,10 +62,14 @@ then
     exit 1
 fi
 
-startScreenInstance "$NAME" "${TML_SOURCE_DIR}/start-tModLoaderServer.sh" \
+ln -s "$HOME/.local/share/Terraria/tModLoader" "./Local"
+ln -s "$SOURCE_PATH" "./App"
+cd "$SOURCE_PATH"
+
+startScreenInstance "$NAME" "${SOURCE_PATH}/start-tModLoaderServer.sh" \
     -nosteam \
-    -config "$TML_CONFIG" \
-    -tmlsavedirectory "$TML_SAVE_DIR" \
+    -config "$SERVER_CONFIGFILEPATH" \
+    -tmlsavedirectory "$SERVER_SAVEFOLDERPATH" \
     -steamworkshopfolder none
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'

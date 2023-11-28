@@ -2,8 +2,14 @@
 source "./start@~.sh"
 echo -e "TheForest Server"
 
+SOURCE_PATH="$STEAM_PATH/steamapps/common/TheForestDedicatedServer"
+
 APP_ID=556450
 APP_PLATFORM="windows"
+
+# https://steamcommunity.com/sharedfiles/filedetails/?id=907906289
+SERVER_CONFIGFILEPATH=
+SERVER_SAVEFOLDERPATH=
 
 if ! setWorkingDirectory "./TheForest";
 then
@@ -46,9 +52,25 @@ then
     exit 1
 fi
 
+# Wine is required to run the server
+if ! command -v wine &> /dev/null;
+then
+    echo -e "\nWine is not installed. Performing installation."
+
+    if ! installPackages "wine";
+    then
+        exit 1
+    fi
+fi
+
+ln -s "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstance "$NAME" ""
+startScreenInstance "$NAME" "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
+    -configfilepath "$SERVER_CONFIGFILEPATH" \
+    -savefolderpath "$SERVER_SAVEFOLDERPATH \
+    -batchmode \
+    -nographics
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"

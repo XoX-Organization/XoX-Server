@@ -11,6 +11,7 @@ APP_UPDATE_MAX_ATTEMPTS=5
 APP_UPDATE_RETRY_DELAY=5
 APP_PLATFORM="linux"
 
+STEAM_PATH="$HOME/.steam/steam"
 STEAM_USERNAME=
 
 JAVA_VERSION=
@@ -141,6 +142,11 @@ updateJavaVersion() {
     fi
 
     sudo update-alternatives --set java "$JAVA_PATH"
+}
+
+installPackages() {
+    printHeader "Installing $@"
+    sudo apt update && sudo apt install -y "$@"
 }
 
 checkScreenInstanceExists() {

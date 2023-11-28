@@ -2,15 +2,15 @@
 source "./start@~.sh"
 echo -e "Minecraft Server"
 
-MINECRAFT_SERVER_SCRIPT=
+SERVER_RUNSCRIPT=
 
 acceptEula() {
-    EULA_FILE="$(dirname "$MINECRAFT_SERVER_SCRIPT")/eula.txt"
+    EULA_FILE="$(dirname "$SERVER_RUNSCRIPT")/eula.txt"
     if [ ! -f "$EULA_FILE" ];
     then
-        echo -e "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA)." \
+        echo -e \
+            "#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA)." \
             "\n#$(date)" \
-            "\n#Signed by: $0" \
             "\neula=true" > "$EULA_FILE"
     fi
 }
@@ -50,7 +50,7 @@ then
 fi
 
 # The Minecraft server needs to be run from the same directory as the server jar
-cd "$(dirname "$MINECRAFT_SERVER_SCRIPT")"
+cd "$(dirname "$SERVER_RUNSCRIPT")"
 
 if ! acceptEula;
 then
@@ -58,7 +58,7 @@ then
     exit 1
 fi
 
-startScreenInstance "$NAME" "./$(basename "$MINECRAFT_SERVER_SCRIPT")"
+startScreenInstance "$NAME" "./$(basename "$SERVER_RUNSCRIPT")"
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"

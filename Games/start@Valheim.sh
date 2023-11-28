@@ -2,13 +2,14 @@
 source "./start@~.sh"
 echo -e "Valheim Server"
 
+SOURCE_PATH="$STEAM_PATH/steamapps/common/Valheim"
+
 APP_ID=892970
-SOURCE_PATH="$HOME/.steam/steam/steamapps/common/Valheim dedicated server"
 
 SERVER_NAME=
 SERVER_PORT=
-SERVER_WORLD=
 SERVER_PASSWORD=
+SERVER_WORLDFILENAME=
 
 if ! setWorkingDirectory "./Valheim";
 then
@@ -51,13 +52,15 @@ then
     exit 1
 fi
 
+ln -s "$HOME/.config/unity3d/IronGate/Valheim" "./Local"
+ln -s "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
 startScreenInstance "$NAME" "${SOURCE_PATH}/valheim_server.x86_64" \
     -name "$SERVER_NAME" \
     -port "$SERVER_PORT" \
-    -world "$SERVER_WORLD" \
     -password "$SERVER_PASSWORD" \
+    -world "$SERVER_WORLDFILENAME" \
     -public 0 \
     -nographics \
     -batchmode \
