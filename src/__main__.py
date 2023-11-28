@@ -73,6 +73,10 @@ class ModuleElement:
             case _:
                 raise Exception(f"Unknown creation type {self._creationType}")
 
+        # Make sure that the file is executable
+        if self.elementType == self.Type.FILE and os.path.basename(self._raw_path).endswith(".sh"):
+            os.chmod(dest, 0o755)
+
     def _mkdir(self, destPath: str) -> None:
         dest = os.path.abspath(destPath)
         os.makedirs(dest, exist_ok=self._exist_ok)
