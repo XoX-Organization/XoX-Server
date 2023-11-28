@@ -170,7 +170,7 @@ startScreenInstance() {
     echo -e "\n\nCommand Arguments:"
     echo -e "$COMMAND"
 
-    echo -e "Tips:"
+    echo -e "\n\nTips:"
     echo -e "To $COLOR_A view $COLOR_RESET the instances,         $COLOR_A screen -ls $COLOR_RESET"
     echo -e "To $COLOR_A attach $COLOR_RESET to the instance,     $COLOR_A screen -r $SCREEN_NAME $COLOR_RESET"
     echo -e "To $COLOR_A detach $COLOR_RESET from the instance,   $COLOR_A press Ctrl+A then Ctrl+D. $COLOR_RESET"

@@ -58,15 +58,22 @@ ln -sf "$HOME/.config/unity3d/IronGate/Valheim" "./Local"
 ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstance "$NAME" "\"${SOURCE_PATH}/valheim_server.x86_64\"" \
-    -name \"$SERVER_NAME\" \
-    -port "$SERVER_PORT" \
-    -password \"$SERVER_PASSWORD\" \
-    -world \"$SERVER_WORLDFILENAME\" \
-    -public 0 \
-    -nographics \
-    -batchmode \
-    -crossplay
+startScreenInstance "$NAME" \
+    "
+    export templdpath=\$LD_LIBRARY_PATH;
+    export LD_LIBRARY_PATH=./linux64:\$LD_LIBRARY_PATH;
+    export SteamAppId=892970;
+    \"${SOURCE_PATH}/valheim_server.x86_64\" \
+        -name \"$SERVER_NAME\" \
+        -port \"$SERVER_PORT\" \
+        -password \"$SERVER_PASSWORD\" \
+        -world \"$SERVER_WORLDFILENAME\" \
+        -public 0 \
+        -nographics \
+        -batchmode \
+        -crossplay;
+    export LD_LIBRARY_PATH=\$templdpath
+    "
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"
