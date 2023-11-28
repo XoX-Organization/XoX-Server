@@ -79,7 +79,7 @@ fi
 ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstanceWithWindow "$NAME" "xvfb-run" \
+startScreenInstance "$NAME" "xvfb-run" \
     --auto-servernum \
     --server-args="-screen 0 640x480x24:32" \
     "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
