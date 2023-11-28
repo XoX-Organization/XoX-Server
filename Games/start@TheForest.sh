@@ -79,12 +79,12 @@ fi
 ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstance "$NAME" xvfb-run --auto-servernum --server-args="-screen 0 640x480x24:32" \
-    wine "$SOURCE_PATH/TheForestDedicatedServer.exe" \
-    -configfilepath "$SERVER_CONFIGFILEPATH" \
-    -savefolderpath "$SERVER_SAVEFOLDERPATH" \
+startScreenInstance "$NAME" "xvfb-run --auto-servernum --server-args=\"-screen 0 640x480x24:32\" \
+    wine \"$SOURCE_PATH/TheForestDedicatedServer.exe\" \
+    -configfilepath \"$SERVER_CONFIGFILEPATH\" \
+    -savefolderpath \"$SERVER_SAVEFOLDERPATH\" \
     -batchmode \
-    -nographics
+    -nographics"
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"
