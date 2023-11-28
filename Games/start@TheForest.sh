@@ -73,7 +73,8 @@ startScreenInstance "$NAME" "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \
     -configfilepath "$SERVER_CONFIGFILEPATH" \
     -savefolderpath "$SERVER_SAVEFOLDERPATH" \
     -batchmode \
-    -nographics
+    -nographics \
+    /nogui
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"
