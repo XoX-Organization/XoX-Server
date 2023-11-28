@@ -63,7 +63,7 @@ then
     fi
 fi
 
-ln -s "$SOURCE_PATH" "./App"
+ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
 startScreenInstance "$NAME" "wine $SOURCE_PATH/TheForestDedicatedServer.exe" \

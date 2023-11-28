@@ -62,8 +62,8 @@ then
     exit 1
 fi
 
-ln -s "$HOME/.local/share/Terraria/tModLoader" "./Local"
-ln -s "$SOURCE_PATH" "./App"
+ln -sf "$HOME/.local/share/Terraria/tModLoader" "./Local"
+ln -sf "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
 startScreenInstance "$NAME" "${SOURCE_PATH}/start-tModLoaderServer.sh" \
