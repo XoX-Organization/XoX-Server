@@ -62,15 +62,18 @@ then
     exit 1
 fi
 
-ln -sf "$HOME/.local/share/Terraria/tModLoader" "./Local"
-ln -sf "$SOURCE_PATH" "./App"
+symlink "$HOME/.local/share/Terraria/tModLoader" "./Local"
+symlink "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
-startScreenInstance "$NAME" "${SOURCE_PATH}/start-tModLoaderServer.sh" \
+startScreenInstance "$NAME" \
+    "
+    \"${SOURCE_PATH}/start-tModLoaderServer.sh\" \
     -nosteam \
     -config \"$SERVER_CONFIGFILEPATH\" \
     -tmlsavedirectory \"$SERVER_SAVEFOLDERPATH\" \
     -steamworkshopfolder none
+    "
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"

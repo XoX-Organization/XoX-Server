@@ -165,7 +165,7 @@ startScreenInstance() {
     printHeader "Starting Instance $INSTANCE_NAME"
     SCREEN_NAME="$1"
     shift
-    COMMAND="$@"
+    COMMAND="$(trim "$@")"
 
     echo -e "\n\nCommand Arguments:"
     echo -e "$COMMAND"
@@ -175,7 +175,35 @@ startScreenInstance() {
     echo -e "To $COLOR_A attach $COLOR_RESET to the instance,     $COLOR_A screen -r $SCREEN_NAME $COLOR_RESET"
     echo -e "To $COLOR_A detach $COLOR_RESET from the instance,   $COLOR_A press Ctrl+A then Ctrl+D. $COLOR_RESET"
 
-    screen -dm -S "$SCREEN_NAME" bash -c "$COMMAND; echo -e '\n\nScreen session has been closed. Press Enter to exit.'; read -p ''; exit 0"
+    screen -dm -S "$SCREEN_NAME" \
+        "
+        bash -c \"$COMMAND\";
+        echo -e \"\n\nScreen session has been closed. Press Enter to exit.\";
+        read -p \"\";
+        exit 0"
 
     echo -e "\n\nInstance has been started in the background."
+}
+
+trim() {
+    local var="$*"
+    # Leading
+    var="${var#"${var%%[![:space:]]*}"}"
+    # Trailing
+    var="${var%"${var##*[![:space:]]}"}"
+}
+
+symlink() {
+    if [ -L "$2" ];
+    then
+        rm "$2"
+    fi
+
+    if [ -e "$2" ];
+    then
+        echo -e "\n$2 already exists."
+        return 1
+    fi
+
+    ln -sf "$1" "$2"
 }

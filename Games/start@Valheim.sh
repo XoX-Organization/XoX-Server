@@ -54,8 +54,8 @@ then
     exit 1
 fi
 
-ln -sf "$HOME/.config/unity3d/IronGate/Valheim" "./Local"
-ln -sf "$SOURCE_PATH" "./App"
+symlink "$HOME/.config/unity3d/IronGate/Valheim" "./Local"
+symlink "$SOURCE_PATH" "./App"
 cd "$SOURCE_PATH"
 
 startScreenInstance "$NAME" \
