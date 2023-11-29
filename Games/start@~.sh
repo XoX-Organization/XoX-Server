@@ -176,10 +176,10 @@ startScreenInstance() {
     echo -e "To $COLOR_A detach $COLOR_RESET from the instance,   $COLOR_A press Ctrl+A then Ctrl+D. $COLOR_RESET"
 
     screen -dm -S "$SCREEN_NAME" \
-        "
-        bash -c \"$COMMAND\";
-        echo -e \"\n\nScreen session has been closed. Press Enter to exit.\";
-        read -p \"\";
+        bash -c "
+        $COMMAND;
+        echo -e '\n\nScreen session has been closed. Press Enter to exit.';
+        read -p '';
         exit 0"
 
     echo -e "\n\nInstance has been started in the background."
