@@ -186,11 +186,7 @@ startScreenInstance() {
 }
 
 trim() {
-    local var="$*"
-    # Leading
-    var="${var#"${var%%[![:space:]]*}"}"
-    # Trailing
-    var="${var%"${var##*[![:space:]]}"}"
+    echo "$1" | sed 's/^ *//;s/ *$//'
 }
 
 symlink() {
