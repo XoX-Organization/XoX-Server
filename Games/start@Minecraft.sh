@@ -346,7 +346,7 @@ then
     jvm_args=$(grep -v "^#" user_jvm_args.txt | tr '\n' ' ')
     startScreenInstance "$NAME" "java -jar $FORGE_LEGACY_JAR -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM $jvm_args nogui"
 else
-    startScreenInstance "$NAME" "java @user_jvm_args.txt @$FORGE_UNIX_ARGS_FILE_PATH '$@' -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM nogui"
+    startScreenInstance "$NAME" "java @user_jvm_args.txt @$FORGE_UNIX_ARGS_FILE_PATH -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM nogui"
 fi
 
 
