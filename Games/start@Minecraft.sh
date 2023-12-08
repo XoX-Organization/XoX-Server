@@ -144,7 +144,7 @@ updateUserJvmArgs() {
         if [[ $found -eq 0 ]];
         then
             echo -e "Adding JVM argument: $arg"
-            echo "$arg" >> "$FORGE_USER_JVM_ARGS_FILE"
+            echo "\n$arg" >> "$FORGE_USER_JVM_ARGS_FILE"
         fi
     done
 
