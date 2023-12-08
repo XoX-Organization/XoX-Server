@@ -33,11 +33,14 @@ printHeader() {
 }
 
 setWorkingDirectory() {
+    printHeader "Setting working directory"
+
     if [ ! -d "$1" ];
     then
         echo -e "\nDirectory \"$1\" does not exist."
         return 1
     fi
+
     cd "$1"
     echo -e "\nWorking directory set to \"$1\"."
 }
@@ -96,7 +99,7 @@ loadInstance() {
     fi
 
     source "$SELECTED_INSTANCE"
-    cat "$SELECTED_INSTANCE" | grep -E "="
+    cat "$SELECTED_INSTANCE" | grep -v "^#" | grep -E "="
 }
 
 updateApp() {
@@ -202,4 +205,5 @@ symlink() {
     fi
 
     ln -sf "$1" "$2"
+    echo -e "\nSymlinked $1 to $2."
 }

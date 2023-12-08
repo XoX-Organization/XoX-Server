@@ -68,7 +68,7 @@ startScreenInstance "$NAME" \
         -port \"$SERVER_PORT\" \
         -password \"$SERVER_PASSWORD\" \
         -world \"$SERVER_WORLDFILENAME\" \
-        -public 0 \
+        -public 1 \
         -nographics \
         -batchmode \
         -crossplay;
