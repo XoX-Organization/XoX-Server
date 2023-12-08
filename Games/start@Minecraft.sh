@@ -185,6 +185,8 @@ printUserJvmArgs() {
 }
 
 acceptEula() {
+    printHeader "Signing EULA"
+
     EULA_FILE="eula.txt"
 
     confirmation() {
@@ -220,6 +222,7 @@ acceptEula() {
         fi
     fi
 
+    echo "EULA has been accepted."
     return 0
 }
 
@@ -344,9 +347,9 @@ fi
 if [ -f "$FORGE_LEGACY_JAR" ];
 then
     jvm_args=$(grep -v "^#" user_jvm_args.txt | tr '\n' ' ')
-    startScreenInstance "$NAME" "java -jar $FORGE_LEGACY_JAR -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM $jvm_args nogui"
+    startScreenInstance "$NAME" "java -jar $FORGE_LEGACY_JAR $jvm_args nogui"
 else
-    startScreenInstance "$NAME" "java @user_jvm_args.txt @$FORGE_UNIX_ARGS_FILE_PATH -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM nogui"
+    startScreenInstance "$NAME" "java @user_jvm_args.txt @$FORGE_UNIX_ARGS_FILE_PATH nogui"
 fi
 
 
