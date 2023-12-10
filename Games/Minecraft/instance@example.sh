@@ -14,9 +14,10 @@ MINECRAFT_VERSION=
 SERVER_LOADER_TYPE=
 
 # The Forge or Fabric version, ex. "47.1.3" "latest" "recommended"
+# https://files.minecraftforge.net/net/minecraftforge/forge/
 #SERVER_LOADER_VERSION=
 
-# Variables for JVM arguments
+# JVM RAM arguments, ex. "4G" "4096M"
 #SERVER_MAX_RAM=
 #SERVER_MIN_RAM=
 

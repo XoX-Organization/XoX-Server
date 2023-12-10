@@ -6,12 +6,15 @@ SERVER_WORKING_DIRECTORY=
 
 # The Minecraft Java version, ex. "1.16.5" "1.20.1"
 MINECRAFT_VERSION=
+
 # Either "forge" or "fabric"
 SERVER_LOADER_TYPE=
+
 # The Forge or Fabric version, ex. "47.1.3" "latest" "recommended"
+# https://files.minecraftforge.net/net/minecraftforge/forge/
 SERVER_LOADER_VERSION="recommended"
 
-# Variables for JVM arguments
+# JVM RAM arguments, ex. "4G" "4096M"
 SERVER_MAX_RAM="6G"
 SERVER_MIN_RAM="2G"
 
@@ -63,6 +66,8 @@ SERVER_JVM_ARGUMENTS_8=(
     "-XX:+UseFPUForSpilling" \
     "-Dgraal.CompilerConfiguration=community"
 )
+
+SERVER_JVM_ARGUMENTS=("${SERVER_JVM_ARGUMENTS_11[@]}")
 
 SERVER_PROPERTIES_FILE="server.properties"
 
@@ -459,54 +464,55 @@ acceptEula() {
 downloadInstaller() {
     printHeader "Downloading Forge installer"
 
-    if [ ! -f "$FORGE_INSTALLER_JAR" ] && [ ! -d "./$FORGE_JAR_PATH" ];
+    if [ -f "$FORGE_INSTALLER_JAR" ];
     then
-        echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist. Proceeding to download Forge installer."
-
-        output=$(wget "$FORGE_DOWNLOAD_URL" 2>&1)
-
-        if [ $? -ne 0 ];
-        then
-            echo -e "\n$output\n"
-            echo -e "Failed to access the Forge website. $FORGE_DOWNLOAD_URL"
-            return 1
-        fi
-
-        echo -e "Forge installer downloaded."
-    else
-        if [ -d "./$FORGE_JAR_PATH" ];
-        then
-            echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist, but the library path ($FORGE_JAR_PATH) exists."
-        else
-            echo -e "Forge installer is good to go."
-        fi
+        echo -e "Forge installer is good to go."
+        return 0
     fi
 
-    return 0
+    echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist."
+
+    if [ -d "./$FORGE_JAR_PATH" ];
+    then
+        echo -e "The library path ($FORGE_JAR_PATH) exists, skipping download."
+        return 0
+    fi
+
+    echo -e "Downloading Forge installer from $FORGE_DOWNLOAD_URL"
+    output=$(wget "$FORGE_DOWNLOAD_URL" 2>&1)
+
+    if [ $? -ne 0 ];
+    then
+        echo -e "\n$output\n"
+        echo -e "Failed to access the Forge website."
+        return 1
+    fi
+
+    echo -e "Forge installer downloaded."
 }
 
 installServer() {
     printHeader "Installing Minecraft server"
 
-    if [ ! -d "./$FORGE_JAR_PATH" ];
+    if [ -d "./$FORGE_JAR_PATH" ];
     then
-        echo -e "Library path ($FORGE_JAR_PATH) does not exist. Proceeding to install Minecraft server."
-
-        output=$(java -jar "$FORGE_INSTALLER_JAR" --installServer 2>&1)
-
-        if [ $? -ne 0 ];
-        then
-            echo -e "\n$output\n"
-            echo -e "Failed to install Minecraft server."
-            return 1
-        fi
-
-        echo -e "Minecraft server installed."
-    else
         echo -e "Minecraft server is good to go."
+        return 0
     fi
 
-    return 0
+    echo -e "Library path ($FORGE_JAR_PATH) does not exist."
+    echo -e "Installing Minecraft server from $FORGE_INSTALLER_JAR"
+
+    output=$(java -jar "$FORGE_INSTALLER_JAR" --installServer 2>&1)
+
+    if [ $? -ne 0 ];
+    then
+        echo -e "\n$output\n"
+        echo -e "Failed to install Minecraft server."
+        return 1
+    fi
+
+    echo -e "Minecraft server installed."
 }
 
 checkAvailableRam() {
@@ -528,7 +534,7 @@ checkAvailableRam() {
 
     if [ "$AVAILABLE_RAM" -lt "$SERVER_MAX_RAM_MB" ];
     then
-        echo -e "\n\nMay not have enough available RAM to allocate maximum RAM depending on the current RAM usage."
+        echo -e "\n\nMay not have enough available RAM to allocate maximum RAM depending on the JVM RAM usage."
         return 1
     fi
 
