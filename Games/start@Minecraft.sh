@@ -14,21 +14,121 @@ SERVER_LOADER_VERSION="recommended"
 # Variables for JVM arguments
 SERVER_MAX_RAM="6G"
 SERVER_MIN_RAM="2G"
-SERVER_JVM_ARGUMENTS=(
-    "-server" \
-    "-XX:+AggressiveOpts" \
-    "-XX:ParallelGCThreads=3" \
-    "-XX:+UseConcMarkSweepGC" \
+
+# https://github.com/brucethemoose/Minecraft-Performance-Flags-Benchmarks
+SERVER_JVM_ARGUMENTS_11=(
     "-XX:+UnlockExperimentalVMOptions" \
-    "-XX:+UseParNewGC" \
-    "-XX:+ExplicitGCInvokesConcurrent" \
-    "-XX:MaxGCPauseMillis=10" \
-    "-XX:GCPauseIntervalMillis=50" \
+    "-XX:+UnlockDiagnosticVMOptions" \
+    "-XX:+AlwaysActAsServerClassMachine" \
+    "-XX:+AlwaysPreTouch" \
+    "-XX:+DisableExplicitGC" \
+    "-XX:+UseNUMA" \
+    "-XX:NmethodSweepActivity=1" \
+    "-XX:ReservedCodeCacheSize=400M" \
+    "-XX:NonNMethodCodeHeapSize=12M" \
+    "-XX:ProfiledCodeHeapSize=194M" \
+    "-XX:NonProfiledCodeHeapSize=194M" \
+    "-XX:-DontCompileHugeMethods" \
+    "-XX:MaxNodeLimit=240000" \
+    "-XX:NodeLimitFudgeFactor=8000" \
+    "-XX:+UseVectorCmov" \
+    "-XX:+PerfDisableSharedMem" \
+    "-XX:+UseFastUnorderedTimeStamps" \
+    "-XX:+UseCriticalJavaThreadPriority" \
+    "-XX:ThreadPriorityPolicy=1" \
+    "-XX:AllocatePrefetchStyle=3"
+)
+
+SERVER_JVM_ARGUMENTS_8=(
+    "-XX:+UnlockExperimentalVMOptions" \
+    "-XX:+UnlockDiagnosticVMOptions" \
+    "-XX:+AlwaysActAsServerClassMachine" \
+    "-XX:+ParallelRefProcEnabled" \
+    "-XX:+DisableExplicitGC" \
+    "-XX:+AlwaysPreTouch" \
+    "-XX:+PerfDisableSharedMem" \
+    "-XX:+AggressiveOpts" \
     "-XX:+UseFastAccessorMethods" \
-    "-XX:+OptimizeStringConcat" \
-    "-XX:NewSize=84m" \
-    "-XX:+UseAdaptiveGCBoundary" \
-    "-XX:NewRatio=3"
+    "-XX:MaxInlineLevel=15" \
+    "-XX:MaxVectorSize=32" \
+    "-XX:+UseCompressedOops" \
+    "-XX:ThreadPriorityPolicy=1" \
+    "-XX:+UseNUMA" \
+    "-XX:+UseDynamicNumberOfGCThreads" \
+    "-XX:NmethodSweepActivity=1" \
+    "-XX:ReservedCodeCacheSize=350M" \
+    "-XX:-DontCompileHugeMethods" \
+    "-XX:MaxNodeLimit=240000" \
+    "-XX:NodeLimitFudgeFactor=8000" \
+    "-XX:+UseFPUForSpilling" \
+    "-Dgraal.CompilerConfiguration=community"
+)
+
+SERVER_PROPERTIES_FILE="server.properties"
+
+# Based on 1.20
+SERVER_PROPERTIES=(
+    "allow-flight=true" \
+    "allow-nether=true" \
+    "broadcast-console-to-ops=true" \
+    "broadcast-rcon-to-ops=true" \
+    "difficulty=easy" \
+    "enable-command-block=true" \
+    "enable-jmx-monitoring=false" \
+    "enable-query=true" \
+    "enable-rcon=true" \
+    "enable-status=true" \
+    "enforce-secure-profile=true" \
+    "enforce-whitelist=false" \
+    "entity-broadcast-range-percentage=100" \
+    "force-gamemode=false" \
+    "function-permission-level=2" \
+    "gamemode=survival" \
+    "generate-structures=true" \
+    "generator-settings={}" \
+    "hardcore=false" \
+    "hide-online-players=false" \
+    "initial-disabled-packs=" \
+    "initial-enabled-packs=vanilla" \
+    "level-name=world" \
+    "level-seed=" \
+    "level-type=minecraft\:normal" \
+    "log-ips=true" \
+    "max-chained-neighbor-updates=1000000" \
+    "max-players=20" \
+    "max-tick-time=60000" \
+    "max-world-size=29999984" \
+    "motd=\u00a74X\u00a7e\u00a7ko\u00a74X\u00a7e e\u00a74Sp\u00a74\u00a7ko\u00a74rts\u00a7b\u00a7o Official Minecraft Server" \
+    "network-compression-threshold=256" \
+    "online-mode=true" \
+    "op-permission-level=4" \
+    "player-idle-timeout=0" \
+    "prevent-proxy-connections=false" \
+    "pvp=true" \
+    "query.port=25565" \
+    "rate-limit=0" \
+    "rcon.password=" \
+    "rcon.port=25575" \
+    "require-resource-pack=false" \
+    "resource-pack-prompt=" \
+    "resource-pack-sha1=" \
+    "resource-pack=" \
+    "server-ip=" \
+    "server-port=25565" \
+    "simulation-distance=10" \
+    "spawn-animals=true" \
+    "spawn-monsters=true" \
+    "spawn-npcs=true" \
+    "spawn-protection=16" \
+    "sync-chunk-writes=true" \
+    "text-filtering-config=" \
+    "use-native-transport=true" \
+    "view-distance=10" \
+    "white-list=false"
+)
+
+SERVER_PROPERTIES_LEGACY=(
+    "difficulty=1"
 )
 
 getForgeLatestVersion() {
@@ -78,7 +178,7 @@ refreshVariables() {
 
             if [ -z "$SERVER_LOADER_VERSION" ];
             then
-                echo -e "No recommended Forge version found. Proceeding to use latest version.\n\n"
+                echo -e "No recommended Forge version found. Proceeding to use latest version."
                 SERVER_LOADER_VERSION=$(getForgeLatestVersion "$FORGE_WEBSITE_HTML")
             fi
         fi
@@ -125,30 +225,93 @@ printVariables() {
     echo -e "Server Min RAM: $SERVER_MIN_RAM"
 }
 
+setSuggestedJvmArgs() {
+    ACTUAL_JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | cut -d'.' -f1-2)
+
+    if [[ $ACTUAL_JAVA_VERSION == *"Unrecognized option"* ]];
+    then
+        ACTUAL_JAVA_VERSION=$(java --version 2>&1 | awk -F '"' '/version/ {print $2}' | cut -d'.' -f2)
+    fi
+
+    if [ "$(printf '%s\n' "$ACTUAL_JAVA_VERSION" "11" | sort -V | head -n1)" = "$ACTUAL_JAVA_VERSION" ];
+    then
+        SERVER_JVM_ARGUMENTS=("${SERVER_JVM_ARGUMENTS_8[@]}")
+        echo -e "Suggested JVM arguments for Java 8"
+    else
+        SERVER_JVM_ARGUMENTS=("${SERVER_JVM_ARGUMENTS_11[@]}")
+        echo -e "Suggested JVM arguments for Java 11 and above"
+    fi
+}
+
 updateUserJvmArgs() {
     printHeader "Updating User JVM Arguments"
 
+    # Create the file if it does not exist
     if [ ! -f "$FORGE_USER_JVM_ARGS_FILE" ];
     then
         touch "$FORGE_USER_JVM_ARGS_FILE"
     fi
 
+    # Replace spaces with newlines and replace the file with the processed file
+    temp_file=$(mktemp)
+
+    while IFS= read -r line;
+    do
+        # Ignore comments and empty lines
+        if [[ "$line" =~ ^#.*$ || -z "$line" ]];
+        then
+            continue
+        fi
+
+        # Split the line into an array by spaces
+        IFS=' ' read -ra args <<< "$line"
+
+        # Process each argument
+        for arg in "${args[@]}";
+        do
+            echo "$arg" >> "$temp_file"
+        done
+    done < "$FORGE_USER_JVM_ARGS_FILE"
+
+    # Check if the last character of the file is a newline
+    if [[ $(tail -c1 "$temp_file") != "" ]]; then
+        # If not, add a newline
+        echo "" >> "$temp_file"
+    fi
+
+    # Replace the original file with the processed file
+    mv "$FORGE_USER_JVM_ARGS_FILE" "$FORGE_USER_JVM_ARGS_FILE.bak"
+    mv "$temp_file" "$FORGE_USER_JVM_ARGS_FILE"
+
+    # Add the JVM arguments if they do not exist
     for arg in "${SERVER_JVM_ARGUMENTS[@]}";
     do
         found=0
+        # Strip the value of the argument if it has one
+        argname=$(echo "$arg" | sed 's/\([0-9].*\)//')
+
         while IFS= read -r line;
         do
-            [[ "$line" == "$arg" || "$line" == "#$arg" ]] && found=1
+            if [[ "$line" == "$argname"* || "$line" == "#$argname"* ]];
+            then
+                found=1
+
+                if [[ "$line" != "$arg" && "$line" != "#$arg" ]];
+                then
+                    echo -e "The JVM argument \"$argname\" has a different value. Ignoring \"$arg\"."
+                fi
+                break
+            fi
         done < "$FORGE_USER_JVM_ARGS_FILE"
 
         if [[ $found -eq 0 ]];
         then
             echo -e "Adding JVM argument: $arg"
-            echo -e "\n$arg" >> "$FORGE_USER_JVM_ARGS_FILE"
+            echo -e "$arg" >> "$FORGE_USER_JVM_ARGS_FILE"
         fi
     done
 
-    echo -e "User JVM arguments updated."
+    echo -e "User JVM arguments is good to go."
 }
 
 cleanUserJvmArgs() {
@@ -156,21 +319,27 @@ cleanUserJvmArgs() {
 
     while true;
     do
-        output=$(java @user_jvm_args.txt -version 2>&1)
+        output=$(java -Xmx100M -Xms100M $(readUserJvmArgs) 2>&1)
+
+        # Check if there are any unrecognized options
         if [[ $output == *"Unrecognized VM option"* ]];
         then
             # Extract the unrecognized option
             unrecognized_option=$(echo $output | grep -o "Unrecognized VM option '[^']*'" | cut -d "'" -f 2)
             # Comment out the unrecognized option in user_jvm_args.txt
-            sed -i "/$unrecognized_option/s/^/#/" user_jvm_args.txt
-            echo -e "Unrecognized option: $unrecognized_option"
+            sed -i "/$unrecognized_option/s/^/#/" $FORGE_USER_JVM_ARGS_FILE
+            echo -e "Cleaning unrecognized option: $unrecognized_option"
         else
             # No more unrecognized options, break the loop
             break
         fi
     done
 
-    echo -e "User JVM arguments is clean."
+    echo -e "User JVM arguments is good to go."
+}
+
+readUserJvmArgs() {
+    echo $(grep -v "^#" $FORGE_USER_JVM_ARGS_FILE | tr '\n' ' ')
 }
 
 printUserJvmArgs() {
@@ -184,14 +353,61 @@ printUserJvmArgs() {
     done < "$FORGE_USER_JVM_ARGS_FILE"
 }
 
+updateServerProperties() {
+    printHeader "Updating Server Properties"
+
+    # If the Minecraft version is older than 1.13, then use the legacy server properties
+    if [ "$(printf '%s\n' "$MINECRAFT_VERSION" "1.13" | sort -V | head -n1)" = "$MINECRAFT_VERSION" ];
+    then
+        # Replace the SERVER_PROPERTIES with the SERVER_PROPERTIES_LEGACY
+        for legacyprop in "${SERVER_PROPERTIES_LEGACY[@]}";
+        do
+            legacypropprefix=$(echo "$legacyprop" | cut -d'=' -f1)
+
+            for prop in "${SERVER_PROPERTIES[@]}";
+            do
+                if [[ "$prop" == "$legacypropprefix"* ]];
+                then
+                    SERVER_PROPERTIES=("${SERVER_PROPERTIES[@]/$prop/$legacyprop}")
+                fi
+            done
+        done
+    fi
+
+    # Create the file if it does not exist and load it with default values
+    if [ ! -f "$SERVER_PROPERTIES_FILE" ];
+    then
+        touch "$SERVER_PROPERTIES_FILE"
+
+        for arg in "${SERVER_PROPERTIES[@]}";
+        do
+            echo -e "$arg" >> "$SERVER_PROPERTIES_FILE"
+        done
+
+        # Ask the user if they want to update the server properties manually
+        read -p $'Do you want to update the server properties manually? (y/N) ' -n 1 -r
+        echo
+
+        if [[ $REPLY =~ ^[Yy]$ ]];
+        then
+            nano "$SERVER_PROPERTIES_FILE"
+        fi
+
+        echo -e "Server properties created and loaded with default values."
+    fi
+
+    echo -e "Server properties is good to go."
+}
+
 acceptEula() {
     printHeader "Signing EULA"
 
     EULA_FILE="eula.txt"
 
     confirmation() {
-        read -p $'\nDo you accept the Minecraft EULA? (https://aka.ms/MinecraftEULA) (y/N) ' -n 1 -r
+        read -p $'Do you accept the Minecraft EULA? (https://aka.ms/MinecraftEULA) (y/N) ' -n 1 -r
         echo
+
         if [[ $REPLY =~ ^[Yy]$ ]];
         then
             return 0
@@ -227,11 +443,11 @@ acceptEula() {
 }
 
 downloadInstaller() {
-    printHeader "Downloading Forge installer..."
+    printHeader "Downloading Forge installer"
 
-    if [ ! -f "$FORGE_INSTALLER_JAR" ];
+    if [ ! -f "$FORGE_INSTALLER_JAR" ] && [ ! -d "./$FORGE_JAR_PATH" ];
     then
-        echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist. Proceeding to download Forge installer.\n\n"
+        echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist. Proceeding to download Forge installer."
         if ! wget "$FORGE_DOWNLOAD_URL";
         then
             echo -e "Failed to download Forge installer."
@@ -239,18 +455,23 @@ downloadInstaller() {
         fi
         echo -e "Forge installer downloaded."
     else
-        echo -e "Forge installer already exists."
+        if [ -d "./$FORGE_JAR_PATH" ];
+        then
+            echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist, but the library path ($FORGE_JAR_PATH) exists."
+        else
+            echo -e "Forge installer is good to go."
+        fi
     fi
 
     return 0
 }
 
 installServer() {
-    printHeader "Installing Minecraft server..."
+    printHeader "Installing Minecraft server"
 
     if [ ! -d "./$FORGE_JAR_PATH" ];
     then
-        echo -e "Library path ($FORGE_JAR_PATH) does not exist. Proceeding to install Minecraft server.\n\n"
+        echo -e "Library path ($FORGE_JAR_PATH) does not exist. Proceeding to install Minecraft server."
 
         if ! java -jar "$FORGE_INSTALLER_JAR" --installServer;
         then
@@ -259,7 +480,33 @@ installServer() {
         fi
         echo -e "Minecraft server installed."
     else
-        echo -e "Minecraft server is installed."
+        echo -e "Minecraft server is good to go."
+    fi
+
+    return 0
+}
+
+checkAvailableRam() {
+    printHeader "Checking available RAM"
+
+    AVAILABLE_RAM=$(free -m | awk '/^Mem:/{print $2}')
+    SERVER_MAX_RAM_MB=$(echo $SERVER_MAX_RAM | sed -e 's/G/*1024/' -e 's/M//' | bc)
+    SERVER_MIN_RAM_MB=$(echo $SERVER_MIN_RAM | sed -e 's/G/*1024/' -e 's/M//' | bc)
+
+    echo -e "Available RAM: $COLOR_A $AVAILABLE_RAM MB $COLOR_RESET"
+    echo -e "Maximum Allocatable RAM: $COLOR_A $SERVER_MAX_RAM_MB MB $COLOR_RESET"
+    echo -e "Minimum Allocated RAM: $COLOR_A $SERVER_MIN_RAM_MB MB $COLOR_RESET"
+
+    if [ "$AVAILABLE_RAM" -lt "$SERVER_MIN_RAM_MB" ];
+    then
+        echo -e "\n\n$COLOR_A Not enough available RAM to allocate minimum RAM. $COLOR_RESET"
+        return 1
+    fi
+
+    if [ "$AVAILABLE_RAM" -lt "$SERVER_MAX_RAM_MB" ];
+    then
+        echo -e "\n\n$COLOR_A May not have enough available RAM to allocate maximum RAM depending on the current RAM usage. $COLOR_RESET"
+        return 1
     fi
 
     return 0
@@ -314,10 +561,30 @@ then
     exit 1
 fi
 
+if [ ! -z "$SERVER_JVM_ARGUMENTS" ];
+then
+    if ! setSuggestedJvmArgs;
+    then
+        exit 1
+    fi
+fi
+
 if ! printVariables;
 then
     exit 1
 fi
+
+for arg in "$@";
+do
+    if [ "$arg" = "--force-reinstall" ];
+    then
+        printHeader "Forcing reinstall of Minecraft server"
+        echo -e "Removing $FORGE_JAR_PATH and $FORGE_INSTALLER_JAR"
+        rm -rf "$FORGE_JAR_PATH"
+        rm -f "$FORGE_INSTALLER_JAR"
+        break
+    fi
+done
 
 if ! downloadInstaller;
 then
@@ -344,14 +611,22 @@ then
     exit 1
 fi
 
-if [ -f "$FORGE_LEGACY_JAR" ];
+if ! updateServerProperties;
 then
-    jvm_args=$(grep -v "^#" user_jvm_args.txt | tr '\n' ' ')
-    startScreenInstance "$NAME" "java -jar $FORGE_LEGACY_JAR $jvm_args nogui"
-else
-    startScreenInstance "$NAME" "java @user_jvm_args.txt @$FORGE_UNIX_ARGS_FILE_PATH nogui"
+    exit 1
 fi
 
+if ! checkAvailableRam;
+then
+    exit 1
+fi
+
+if [ -f "$FORGE_LEGACY_JAR" ];
+then
+    startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM $(readUserJvmArgs) -jar $FORGE_LEGACY_JAR nogui"
+else
+    startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM @$FORGE_USER_JVM_ARGS_FILE @$FORGE_UNIX_ARGS_FILE_PATH nogui"
+fi
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
 screen -r "$NAME"

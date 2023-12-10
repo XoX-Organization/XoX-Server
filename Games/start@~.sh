@@ -78,15 +78,16 @@ printInstances() {
 }
 
 chooseInstance() {
-    read -p $'\nChoose Instance: ' choice
+    read -p $'\nChoose Instance: ' -n 1 -r
+    echo
 
-    if [[ ! $choice =~ ^[0-9]+$ || $choice -lt 1 || $choice -gt ${#INSTANCES[@]} ]];
+    if [[ ! $REPLY =~ ^[0-9]+$ || $REPLY -lt 1 || $REPLY -gt ${#INSTANCES[@]} ]];
     then
         echo -e "\nInvalid input. Please enter a valid number."
         return 1
     fi
 
-    SELECTED_INSTANCE="${INSTANCES[choice - 1]}"
+    SELECTED_INSTANCE="${INSTANCES[REPLY - 1]}"
 }
 
 loadInstance() {
