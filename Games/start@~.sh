@@ -37,12 +37,12 @@ setWorkingDirectory() {
 
     if [ ! -d "$1" ];
     then
-        echo -e "\nDirectory \"$1\" does not exist."
+        echo -e "Directory \"$1\" does not exist."
         return 1
     fi
 
     cd "$1"
-    echo -e "\nWorking directory set to \"$1\"."
+    echo -e "Working directory set to \"$1\"."
 }
 
 findInstances() {
@@ -190,7 +190,10 @@ startScreenInstance() {
 }
 
 trim() {
-    echo "$1" | sed 's/^ *//;s/ *$//'
+    local var="$*"
+    var="${var#"${var%%[![:space:]]*}"}"
+    var="${var%"${var##*[![:space:]]}"}"
+    echo -n "$var"
 }
 
 symlink() {
@@ -201,10 +204,10 @@ symlink() {
 
     if [ -e "$2" ];
     then
-        echo -e "\n$2 already exists."
+        echo -e "$2 already exists."
         return 1
     fi
 
     ln -sf "$1" "$2"
-    echo -e "\nSymlinked $1 to $2."
+    echo -e "Symlinked $1 to $2."
 }

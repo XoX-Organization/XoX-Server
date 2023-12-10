@@ -257,9 +257,10 @@ updateUserJvmArgs() {
 
     while IFS= read -r line;
     do
-        # Ignore comments and empty lines
+        # Add comment and empty line to the processed file
         if [[ "$line" =~ ^#.*$ || -z "$line" ]];
         then
+            echo "$line" >> "$temp_file"
             continue
         fi
 
@@ -274,7 +275,8 @@ updateUserJvmArgs() {
     done < "$FORGE_USER_JVM_ARGS_FILE"
 
     # Check if the last character of the file is a newline
-    if [[ $(tail -c1 "$temp_file") != "" ]]; then
+    if [[ $(tail -c1 "$temp_file") != "" ]];
+    then
         # If not, add a newline
         echo "" >> "$temp_file"
     fi
@@ -292,11 +294,15 @@ updateUserJvmArgs() {
 
         while IFS= read -r line;
         do
-            if [[ "$line" == "$argname"* || "$line" == "#$argname"* ]];
+            # Convert comment to non-comment
+            line=$(echo "$line" | sed 's/^#//')
+            line=$(trim "$line")
+
+            if [[ "$line" == "$argname"* ]];
             then
                 found=1
 
-                if [[ "$line" != "$arg" && "$line" != "#$arg" ]];
+                if [[ "$line" != "$arg" ]];
                 then
                     echo -e "The JVM argument \"$argname\" has a different value. Ignoring \"$arg\"."
                 fi
@@ -319,18 +325,32 @@ cleanUserJvmArgs() {
 
     while true;
     do
-        output=$(java -Xmx100M -Xms100M $(readUserJvmArgs) 2>&1)
+        output=$(java $(readUserJvmArgs) 2>&1)
 
         # Check if there are any unrecognized options
-        if [[ $output == *"Unrecognized VM option"* ]];
+        for pattern in "Unrecognized VM option" "Unrecognized option";
+        do
+            unrecognized_option=$(echo "$output" | grep "$pattern" | awk -F': ' '{print $2}')
+
+            if [ -n "$unrecognized_option" ];
+            then
+                # Comment out the unrecognized option in user_jvm_args.txt
+                sed -i "/$unrecognized_option/s/^/#/" $FORGE_USER_JVM_ARGS_FILE
+                echo -e "Cleaning unrecognized option: $unrecognized_option"
+                break
+            fi
+        done
+
+        if [ -z "$unrecognized_option" ];
         then
-            # Extract the unrecognized option
-            unrecognized_option=$(echo $output | grep -o "Unrecognized VM option '[^']*'" | cut -d "'" -f 2)
-            # Comment out the unrecognized option in user_jvm_args.txt
-            sed -i "/$unrecognized_option/s/^/#/" $FORGE_USER_JVM_ARGS_FILE
-            echo -e "Cleaning unrecognized option: $unrecognized_option"
-        else
-            # No more unrecognized options, break the loop
+            # If there is other errors
+            if [[ ! "$output" =~ ^Usage.*$ ]];
+            then
+                echo -e "\n$output\n"
+                echo -e "Something is not caught. Please fix the JVM arguments manually."
+                return 1
+            fi
+
             break
         fi
     done
@@ -344,13 +364,7 @@ readUserJvmArgs() {
 
 printUserJvmArgs() {
     printHeader "User JVM Arguments"
-
-    while read -r line; do
-        # Ignore comments and empty lines
-        if [[ ! "$line" =~ ^# && ! -z "$line" ]]; then
-            echo -e "$line"
-        fi
-    done < "$FORGE_USER_JVM_ARGS_FILE"
+    echo -e "$(readUserJvmArgs | sed 's/ /\n/g')"
 }
 
 updateServerProperties() {
@@ -448,11 +462,16 @@ downloadInstaller() {
     if [ ! -f "$FORGE_INSTALLER_JAR" ] && [ ! -d "./$FORGE_JAR_PATH" ];
     then
         echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist. Proceeding to download Forge installer."
-        if ! wget "$FORGE_DOWNLOAD_URL";
+
+        output=$(wget "$FORGE_DOWNLOAD_URL" 2>&1)
+
+        if [ $? -ne 0 ];
         then
-            echo -e "Failed to download Forge installer."
+            echo -e "\n$output\n"
+            echo -e "Failed to access the Forge website. $FORGE_DOWNLOAD_URL"
             return 1
         fi
+
         echo -e "Forge installer downloaded."
     else
         if [ -d "./$FORGE_JAR_PATH" ];
@@ -473,11 +492,15 @@ installServer() {
     then
         echo -e "Library path ($FORGE_JAR_PATH) does not exist. Proceeding to install Minecraft server."
 
-        if ! java -jar "$FORGE_INSTALLER_JAR" --installServer;
+        output=$(java -jar "$FORGE_INSTALLER_JAR" --installServer 2>&1)
+
+        if [ $? -ne 0 ];
         then
+            echo -e "\n$output\n"
             echo -e "Failed to install Minecraft server."
             return 1
         fi
+
         echo -e "Minecraft server installed."
     else
         echo -e "Minecraft server is good to go."
@@ -495,17 +518,17 @@ checkAvailableRam() {
 
     echo -e "Available RAM: $COLOR_A $AVAILABLE_RAM MB $COLOR_RESET"
     echo -e "Maximum Allocatable RAM: $COLOR_A $SERVER_MAX_RAM_MB MB $COLOR_RESET"
-    echo -e "Minimum Allocated RAM: $COLOR_A $SERVER_MIN_RAM_MB MB $COLOR_RESET"
+    echo -e "Minimum RAM Required: $COLOR_A $SERVER_MIN_RAM_MB MB $COLOR_RESET"
 
     if [ "$AVAILABLE_RAM" -lt "$SERVER_MIN_RAM_MB" ];
     then
-        echo -e "\n\n$COLOR_A Not enough available RAM to allocate minimum RAM. $COLOR_RESET"
+        echo -e "\n\nNot enough available RAM to allocate minimum RAM."
         return 1
     fi
 
     if [ "$AVAILABLE_RAM" -lt "$SERVER_MAX_RAM_MB" ];
     then
-        echo -e "\n\n$COLOR_A May not have enough available RAM to allocate maximum RAM depending on the current RAM usage. $COLOR_RESET"
+        echo -e "\n\nMay not have enough available RAM to allocate maximum RAM depending on the current RAM usage."
         return 1
     fi
 
@@ -561,7 +584,7 @@ then
     exit 1
 fi
 
-if [ ! -z "$SERVER_JVM_ARGUMENTS" ];
+if [ -z "$SERVER_JVM_ARGUMENTS" ];
 then
     if ! setSuggestedJvmArgs;
     then
@@ -579,9 +602,12 @@ do
     if [ "$arg" = "--force-reinstall" ];
     then
         printHeader "Forcing reinstall of Minecraft server"
-        echo -e "Removing $FORGE_JAR_PATH and $FORGE_INSTALLER_JAR"
+        echo -e "Removing \"$FORGE_JAR_PATH\" and \"$FORGE_INSTALLER_JAR\""
         rm -rf "$FORGE_JAR_PATH"
         rm -f "$FORGE_INSTALLER_JAR"
+
+        echo -e "Backing up \"$FORGE_USER_JVM_ARGS_FILE\""
+        mv "$FORGE_USER_JVM_ARGS_FILE" "$FORGE_USER_JVM_ARGS_FILE.old" 2>/dev/null
         break
     fi
 done
