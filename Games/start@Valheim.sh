@@ -5,12 +5,13 @@ echo -e "Valheim Server"
 SOURCE_PATH="$STEAM_PATH/SteamApps/common/Valheim dedicated server"
 
 APP_ID=896660
+APP_BETA_BRANCH="none"
 
 STEAM_USERNAME="anonymous"
 
-SERVER_NAME=
-SERVER_PORT=
-SERVER_PASSWORD=
+SERVER_NAME="XoX eSports Valheim Server"
+SERVER_PORT="2456"
+SERVER_PASSWORD="xoxsince2020"
 SERVER_WORLDFILENAME=
 
 if ! setWorkingDirectory "./Valheim";
