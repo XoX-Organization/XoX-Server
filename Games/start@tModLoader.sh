@@ -45,7 +45,10 @@ if [[ "$*" == *-noupdate* ]];
 then
     echo -e "\nSkipping update."
 else
-    updateApp
+    if ! updateApp;
+    then
+        exit 1
+    fi
 fi
 
 # Copy "enabled.json" to "enabled.json.constant" to prevent tModLoader from updating it
