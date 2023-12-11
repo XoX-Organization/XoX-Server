@@ -105,6 +105,18 @@ loadInstance() {
 
 updateApp() {
     printHeader "Updating App $APP_ID"
+
+    if [ -z "$STEAM_USERNAME" ];
+    then
+        if [ -z "$STEAM_USER_NAME" ];
+        then
+            echo -e "Steam username is not set. Please export STEAM_USER_NAME environment variable."
+            return 1
+        fi
+
+        STEAM_USERNAME="$STEAM_USER_NAME"
+    fi
+
     attempt=0
 
     while ((attempt < APP_UPDATE_MAX_ATTEMPTS));
