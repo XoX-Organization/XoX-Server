@@ -535,7 +535,7 @@ checkAvailableRam() {
     if [ "$AVAILABLE_RAM" -lt "$SERVER_MAX_RAM_MB" ];
     then
         echo -e "\n\nMay not have enough available RAM to allocate maximum RAM depending on the JVM RAM usage."
-        return 1
+        return 0
     fi
 
     return 0
