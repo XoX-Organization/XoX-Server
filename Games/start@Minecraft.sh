@@ -67,7 +67,7 @@ SERVER_JVM_ARGUMENTS_8=(
     "-Dgraal.CompilerConfiguration=community"
 )
 
-SERVER_JVM_ARGUMENTS=("${SERVER_JVM_ARGUMENTS_11[@]}")
+SERVER_JVM_ARGUMENTS="undefined"
 
 SERVER_PROPERTIES_FILE="server.properties"
 
@@ -278,6 +278,7 @@ updateUserJvmArgs() {
             echo "$arg" >> "$temp_file"
         done
     done < "$FORGE_USER_JVM_ARGS_FILE"
+    echo -e "Spaces in \"$FORGE_USER_JVM_ARGS_FILE\" have been replaced with newlines."
 
     # Check if the last character of the file is a newline
     if [[ $(tail -c1 "$temp_file") != "" ]];
@@ -289,6 +290,7 @@ updateUserJvmArgs() {
     # Replace the original file with the processed file
     mv "$FORGE_USER_JVM_ARGS_FILE" "$FORGE_USER_JVM_ARGS_FILE.bak"
     mv "$temp_file" "$FORGE_USER_JVM_ARGS_FILE"
+    echo -e "Backup of \"$FORGE_USER_JVM_ARGS_FILE\" created."
 
     # Add the JVM arguments if they do not exist
     for arg in "${SERVER_JVM_ARGUMENTS[@]}";
@@ -590,7 +592,7 @@ then
     exit 1
 fi
 
-if [ -z "$SERVER_JVM_ARGUMENTS" ];
+if [[ "$SERVER_JVM_ARGUMENTS" = "undefined" ]];
 then
     if ! setSuggestedJvmArgs;
     then
