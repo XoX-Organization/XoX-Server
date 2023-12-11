@@ -251,6 +251,16 @@ setSuggestedJvmArgs() {
 updateUserJvmArgs() {
     printHeader "Updating User JVM Arguments"
 
+    if [[ "$SERVER_JVM_ARGUMENTS" = "undefined" ]];
+    then
+        if ! setSuggestedJvmArgs;
+        then
+            return 1
+        fi
+    else
+        echo -e "Using custom JVM arguments"
+    fi
+
     # Create the file if it does not exist
     if [ ! -f "$FORGE_USER_JVM_ARGS_FILE" ];
     then
@@ -590,14 +600,6 @@ fi
 if ! refreshVariables;
 then
     exit 1
-fi
-
-if [[ "$SERVER_JVM_ARGUMENTS" = "undefined" ]];
-then
-    if ! setSuggestedJvmArgs;
-    then
-        exit 1
-    fi
 fi
 
 if ! printVariables;
