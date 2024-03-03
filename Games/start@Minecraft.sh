@@ -146,6 +146,11 @@ getForgeRecommendedVersion() {
     echo $(echo $FORGE_RECOMMENDED_VERSION | cut -d '-' -f 2 | tr -d ' ')
 }
 
+getFabricLatestVersion() {
+    FABRIC_LATEST_VERSION=$(echo "$1"  | jq -r '.[] | select(.stable==true) | .version' | head -1)
+    echo $(echo $FABRIC_LATEST_VERSION | cut -d '-' -f 2 | tr -d ' ')
+}
+
 refreshVariables() {
     printHeader "Refreshing Variables"
 
@@ -161,50 +166,75 @@ refreshVariables() {
         return 1
     fi
 
-    # If the server loader version is "latest" or "recommended", then get the latest or recommended version from the Forge website
+    if [ -z "$SERVER_LOADER_VERSION" ];
+    then
+        echo -e "No server loader version provided. Please provide a server loader version to continue."
+        return 1
+    fi
+
+    # If the server loader version is "latest" or "recommended", then get the latest or recommended version from the website
     if [ "$SERVER_LOADER_VERSION" == "latest" ] || [ "$SERVER_LOADER_VERSION" == "recommended" ];
     then
         FORGE_WEBSITE_URL="https://files.minecraftforge.net/net/minecraftforge/forge/index_$MINECRAFT_VERSION.html"
-        FORGE_WEBSITE_HTML=$(wget -qO- "$FORGE_WEBSITE_URL")
+        FABRIC_WEBSITE_URL="https://meta.fabricmc.net/v2/versions/loader"
+
+        if [ "$SERVER_LOADER_TYPE" == "fabric" ];
+        then
+            FABRIC_WEBSITE_HTML=$(wget -qO- "$FABRIC_WEBSITE_URL")
+            _WEBSITE_HTML=$FABRIC_WEBSITE_HTML
+        else
+            FORGE_WEBSITE_HTML=$(wget -qO- "$FORGE_WEBSITE_URL")
+            _WEBSITE_HTML=$FORGE_WEBSITE_HTML
+        fi
 
         if [ $? -ne 0 ];
         then
-            echo -e "Failed to access the Forge website. $FORGE_WEBSITE_URL"
+            echo -e "Failed to access the $SERVER_LOADER_TYPE website. $_WEBSITE_URL"
             return 1
         fi
 
-        if [ "$SERVER_LOADER_VERSION" == "latest" ];
+        # For Fabric
+        if [ "$SERVER_LOADER_TYPE" == "fabric" ];
         then
-            SERVER_LOADER_VERSION=$(getForgeLatestVersion "$FORGE_WEBSITE_HTML")
+            SERVER_LOADER_VERSION=$(getFabricLatestVersion "$_WEBSITE_HTML")
+
+        # For Forge
+        elif [ "$SERVER_LOADER_VERSION" == "latest" ];
+        then
+            SERVER_LOADER_VERSION=$(getForgeLatestVersion "$_WEBSITE_HTML")
 
         elif [ "$SERVER_LOADER_VERSION" == "recommended" ];
         then
-            SERVER_LOADER_VERSION=$(getForgeRecommendedVersion "$FORGE_WEBSITE_HTML")
-
-            if [ -z "$SERVER_LOADER_VERSION" ];
-            then
-                echo -e "No recommended Forge version found. Proceeding to use latest version."
-                SERVER_LOADER_VERSION=$(getForgeLatestVersion "$FORGE_WEBSITE_HTML")
-            fi
+            SERVER_LOADER_VERSION=$(getForgeRecommendedVersion "$_WEBSITE_HTML")
         fi
     fi
 
-    FORGE_JAR_PATH="libraries/net/minecraftforge/forge/$MINECRAFT_VERSION-$SERVER_LOADER_VERSION"
-    FORGE_SERVER_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION-server.jar"
-    FORGE_SERVER_JAR_PATH="$FORGE_JAR_PATH/$FORGE_SERVER_JAR"
-    FORGE_UNIVERSAL_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION-universal.jar"
-    FORGE_UNIVERSAL_JAR_PATH="$FORGE_JAR_PATH/$FORGE_UNIVERSAL_JAR"
+    # For Fabric
+    if [ "$SERVER_LOADER_TYPE" == "fabric" ];
+    then
+        FABRIC_INSTALLER_VERSION="1.0.0"
+        FABRIC_SERVER_JAR="fabric-server-mc.$MINECRAFT_VERSION-loader.$SERVER_LOADER_VERSION-launcher.$FABRIC_INSTALLER_VERSION.jar"
+        FABRIC_DOWNLOAD_URL="https://meta.fabricmc.net/v2/versions/loader/$MINECRAFT_VERSION/$SERVER_LOADER_VERSION/$FABRIC_INSTALLER_VERSION/server/jar"
 
-    # For older Minecraft version (ex. 1.12.2), the server jar path is different
-    FORGE_LEGACY_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION.jar"
+    # For Forge
+    else
+        FORGE_JAR_PATH="libraries/net/minecraftforge/forge/$MINECRAFT_VERSION-$SERVER_LOADER_VERSION"
+        FORGE_SERVER_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION-server.jar"
+        FORGE_SERVER_JAR_PATH="$FORGE_JAR_PATH/$FORGE_SERVER_JAR"
+        FORGE_UNIVERSAL_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION-universal.jar"
+        FORGE_UNIVERSAL_JAR_PATH="$FORGE_JAR_PATH/$FORGE_UNIVERSAL_JAR"
 
-    FORGE_INSTALLER_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION-installer.jar"
-    FORGE_DOWNLOAD_URL="http://files.minecraftforge.net/maven/net/minecraftforge/forge/$MINECRAFT_VERSION-$SERVER_LOADER_VERSION/$FORGE_INSTALLER_JAR"
+        # For older Minecraft version (ex. 1.12.2), the server jar path is different
+        FORGE_LEGACY_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION.jar"
 
-    FORGE_USER_JVM_ARGS_FILE="user_jvm_args.txt"
+        FORGE_INSTALLER_JAR="forge-$MINECRAFT_VERSION-$SERVER_LOADER_VERSION-installer.jar"
+        FORGE_DOWNLOAD_URL="http://files.minecraftforge.net/maven/net/minecraftforge/forge/$MINECRAFT_VERSION-$SERVER_LOADER_VERSION/$FORGE_INSTALLER_JAR"
 
-    FORGE_UNIX_ARGS_FILE="unix_args.txt"
-    FORGE_UNIX_ARGS_FILE_PATH="$FORGE_JAR_PATH/$FORGE_UNIX_ARGS_FILE"
+        FORGE_USER_JVM_ARGS_FILE="user_jvm_args.txt"
+
+        FORGE_UNIX_ARGS_FILE="unix_args.txt"
+        FORGE_UNIX_ARGS_FILE_PATH="$FORGE_JAR_PATH/$FORGE_UNIX_ARGS_FILE"
+    fi
 
     echo -e "Variables refreshed."
 }
@@ -215,16 +245,23 @@ printVariables() {
     echo -e "Minecraft Version: $MINECRAFT_VERSION"
     echo -e "Server Loader Type: $SERVER_LOADER_TYPE"
     echo -e "Server Loader Version: $SERVER_LOADER_VERSION"
-    echo -e "Forge Jar Path: $FORGE_JAR_PATH"
-    echo -e "Forge Server Jar: $FORGE_SERVER_JAR"
-    echo -e "Forge Server Jar Path: $FORGE_SERVER_JAR_PATH"
-    echo -e "Forge Universal Jar: $FORGE_UNIVERSAL_JAR"
-    echo -e "Forge Universal Jar Path: $FORGE_UNIVERSAL_JAR_PATH"
-    echo -e "Forge Installer Jar: $FORGE_INSTALLER_JAR"
-    echo -e "Forge Download URL: $FORGE_DOWNLOAD_URL"
-    echo -e "Forge User JVM Args File: $FORGE_USER_JVM_ARGS_FILE"
-    echo -e "Forge Unix Args File: $FORGE_UNIX_ARGS_FILE"
-    echo -e "Forge Unix Args File Path: $FORGE_UNIX_ARGS_FILE_PATH"
+
+    if [ "$SERVER_LOADER_TYPE" == "fabric" ];
+    then
+        echo -e "Fabric Server Jar: $FABRIC_SERVER_JAR"
+        echo -e "Fabric Download URL: $FABRIC_DOWNLOAD_URL"
+    else
+        echo -e "Forge Jar Path: $FORGE_JAR_PATH"
+        echo -e "Forge Server Jar: $FORGE_SERVER_JAR"
+        echo -e "Forge Server Jar Path: $FORGE_SERVER_JAR_PATH"
+        echo -e "Forge Universal Jar: $FORGE_UNIVERSAL_JAR"
+        echo -e "Forge Universal Jar Path: $FORGE_UNIVERSAL_JAR_PATH"
+        echo -e "Forge Installer Jar: $FORGE_INSTALLER_JAR"
+        echo -e "Forge Download URL: $FORGE_DOWNLOAD_URL"
+        echo -e "Forge User JVM Args File: $FORGE_USER_JVM_ARGS_FILE"
+        echo -e "Forge Unix Args File: $FORGE_UNIX_ARGS_FILE"
+        echo -e "Forge Unix Args File Path: $FORGE_UNIX_ARGS_FILE_PATH"
+    fi
 
     echo -e "Server Max RAM: $SERVER_MAX_RAM"
     echo -e "Server Min RAM: $SERVER_MIN_RAM"
@@ -379,6 +416,20 @@ readUserJvmArgs() {
     echo $(grep -v "^#" $FORGE_USER_JVM_ARGS_FILE | tr '\n' ' ')
 }
 
+getServerJvmArgsString() {
+    if [ $SERVER_JVM_ARGUMENTS == "undefined" ];
+    then
+        return 1
+    fi
+
+    _args=""
+    for arg in "${SERVER_JVM_ARGUMENTS[@]}";
+    do
+        _args="$_args $arg"
+    done
+    echo -e "$_args"
+}
+
 printUserJvmArgs() {
     printHeader "User JVM Arguments"
     echo -e "$(readUserJvmArgs | sed 's/ /\n/g')"
@@ -474,35 +525,48 @@ acceptEula() {
 }
 
 downloadInstaller() {
-    printHeader "Downloading Forge installer"
-
-    if [ -f "$FORGE_INSTALLER_JAR" ];
+    if [ "$SERVER_LOADER_TYPE" == "fabric" ];
     then
-        echo -e "Forge installer is good to go."
+        _SERVER_LOADER_TYPE="Fabric"
+        _INSTALLER_JAR="$FABRIC_SERVER_JAR"
+        _DOWNLOAD_URL="$FABRIC_DOWNLOAD_URL"
+    else
+        _SERVER_LOADER_TYPE="Forge"
+        _INSTALLER_JAR="$FORGE_INSTALLER_JAR"
+        _DOWNLOAD_URL="$FORGE_DOWNLOAD_URL"
+    fi
+
+    printHeader "Downloading $_SERVER_LOADER_TYPE installer"
+
+
+    if [ -f "$_INSTALLER_JAR" ];
+    then
+        echo -e "$_SERVER_LOADER_TYPE installer is good to go."
         return 0
     fi
 
-    echo -e "Forge installer ($FORGE_INSTALLER_JAR) does not exist."
+    echo -e "$_SERVER_LOADER_TYPE installer ($_INSTALLER_JAR) does not exist."
 
-    if [ -d "./$FORGE_JAR_PATH" ];
+    if [ -d "./$FORGE_JAR_PATH" ] && [ "$SERVER_LOADER_TYPE" == "forge" ];
     then
         echo -e "The library path ($FORGE_JAR_PATH) exists, skipping download."
         return 0
     fi
 
-    echo -e "Downloading Forge installer from $FORGE_DOWNLOAD_URL"
-    output=$(wget "$FORGE_DOWNLOAD_URL" 2>&1)
+    echo -e "Downloading $_SERVER_LOADER_TYPE installer from $_DOWNLOAD_URL"
+    output=$(wget -O "$_INSTALLER_JAR" "$_DOWNLOAD_URL" 2>&1)
 
     if [ $? -ne 0 ];
     then
         echo -e "\n$output\n"
-        echo -e "Failed to access the Forge website."
+        echo -e "Failed to access the $_SERVER_LOADER_TYPE website."
         return 1
     fi
 
-    echo -e "Forge installer downloaded."
+    echo -e "$_SERVER_LOADER_TYPE installer downloaded."
 }
 
+# Only for Forge
 installServer() {
     printHeader "Installing Minecraft server"
 
@@ -597,6 +661,16 @@ then
     exit 1
 fi
 
+if ! command -v wine &> /dev/null;
+then
+    echo -e "\njq is not installed. Performing installation."
+
+    if ! installPackages "jq";
+    then
+        exit 1
+    fi
+fi
+
 if ! refreshVariables;
 then
     exit 1
@@ -612,6 +686,15 @@ do
     if [ "$arg" = "--force-reinstall" ];
     then
         printHeader "Forcing reinstall of Minecraft server"
+
+        if [ $SERVER_LOADER_TYPE == "fabric" ];
+        then
+            echo -e "Removing \".fabric\" folder and \"$FABRIC_SERVER_JAR\""
+            rm -rf "./.fabric"
+            rm -f "$FABRIC_SERVER_JAR"
+            break
+        fi
+
         echo -e "Removing \"$FORGE_JAR_PATH\" and \"$FORGE_INSTALLER_JAR\""
         rm -rf "$FORGE_JAR_PATH"
         rm -f "$FORGE_INSTALLER_JAR"
@@ -627,24 +710,27 @@ then
     exit 1
 fi
 
-if ! installServer;
+if [ "$SERVER_LOADER_TYPE" == "forge" ];
 then
-    exit 1
-fi
+    if ! installServer;
+    then
+        exit 1
+    fi
 
-if ! updateUserJvmArgs;
-then
-    exit 1
-fi
+    if ! updateUserJvmArgs;
+    then
+        exit 1
+    fi
 
-if ! cleanUserJvmArgs;
-then
-    exit 1
-fi
+    if ! cleanUserJvmArgs;
+    then
+        exit 1
+    fi
 
-if ! printUserJvmArgs;
-then
-    exit 1
+    if ! printUserJvmArgs;
+    then
+        exit 1
+    fi
 fi
 
 if ! updateServerProperties;
@@ -657,11 +743,16 @@ then
     exit 1
 fi
 
-if [ -f "$FORGE_LEGACY_JAR" ];
+if [ "$SERVER_LOADER_TYPE" == "fabric" ];
 then
-    startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM $(readUserJvmArgs) -jar $FORGE_LEGACY_JAR nogui"
+    startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM $(getServerJvmArgsString) -jar $FABRIC_SERVER_JAR nogui"
 else
-    startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM @$FORGE_USER_JVM_ARGS_FILE @$FORGE_UNIX_ARGS_FILE_PATH nogui"
+    if [ -f "$FORGE_LEGACY_JAR" ];
+    then
+        startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM $(readUserJvmArgs) -jar $FORGE_LEGACY_JAR nogui"
+    else
+        startScreenInstance "$NAME" "java -server -Xmx$SERVER_MAX_RAM -Xms$SERVER_MIN_RAM @$FORGE_USER_JVM_ARGS_FILE @$FORGE_UNIX_ARGS_FILE_PATH nogui"
+    fi
 fi
 
 read -p $'\n\nPress Enter to attach to the instance, or Ctrl+C to skip.'
