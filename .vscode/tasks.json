@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "npm run build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Knex Migrate",
+            "type": "shell",
+            "command": "npm run migrate"
+        },
+        {
+            "label": "Pre Launch",
+            "dependsOn": ["Build", "Knex Migrate"]
+        }
+    ]
+}
