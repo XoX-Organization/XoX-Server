@@ -27,7 +27,7 @@ export const steamUpdate = async ({
 }) => {
     if (!fs.existsSync(steamPath)) {
         throw new Error(
-            'SteamCMD not found, please install it with `curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -`',
+            "SteamCMD not found, refer to `https://developer.valvesoftware.com/wiki/SteamCMD` for installation instructions",
         )
     }
     const chosenSteamUsername =
@@ -60,17 +60,26 @@ export const steamUpdate = async ({
     )
     for (let i = 0; i < maxRetries; i++) {
         try {
-            await $`${command}`
+            await $`${command}`.pipe(process.stdout)
             return
         } catch {
             console.error("Steam update failed. Retrying...")
-            await new Promise((resolve) => setTimeout(() => {}, 3000))
+            await new Promise((resolve) => setTimeout(resolve, 3000))
         }
     }
     throw new Error(`Steam update failed after ${maxRetries} retries`)
 }
 
 // Screen Handlers
+
+const nameScreen = <T extends PersistedObject>(metadata: T) => {
+    return `${metadata.name}-${metadata.uuid}`
+}
+
+export const existsScreen = async <T extends PersistedObject>(metadata: T) => {
+    const { stdout } = await $`screen -ls`.catch((reason) => reason)
+    return stdout.includes(nameScreen(metadata))
+}
 
 export const createScreen = async <T extends PersistedObject>({
     metadata,
@@ -79,10 +88,16 @@ export const createScreen = async <T extends PersistedObject>({
     metadata: T
     screenArgs: string[]
 }) => {
+    if (await existsScreen(metadata)) {
+        throw new Error(
+            `Screen ${nameScreen(metadata)} already exists, aborting`,
+        )
+    }
+
     const command = [
         `screen`,
         `-dm`,
-        `-S ${metadata.name}-${metadata.uuid}`,
+        `-S ${nameScreen(metadata)}`,
         `bash -c`,
         `"${screenArgs.join(" ")};`,
         `echo -e '\n\nScreen session has been closed. Press Enter to exit.';`,
@@ -94,7 +109,7 @@ export const createScreen = async <T extends PersistedObject>({
 }
 
 export const attachScreen = async <T extends PersistedObject>(metadata: T) => {
-    await $`screen -r ${metadata.name}-${metadata.uuid}`
+    await $`screen -r ${nameScreen(metadata)}`
 }
 
 // Game Instance Persistence Handlers

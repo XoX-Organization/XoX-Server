@@ -1,4 +1,4 @@
-import { confirm, input, select } from "@inquirer/prompts"
+import { confirm, input } from "@inquirer/prompts"
 import { randomUUID } from "crypto"
 import fs from "fs"
 import * as Core from "."
@@ -137,7 +137,7 @@ class TModLoaderScreen extends GameScreen<
         await Core.steamUpdate({
             steamAppId: TModLoaderScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
-            steamLoginAnonymous: true,
+            steamLoginAnonymous: false,
             steamUsername: instance.steamUsername,
         })
         await this.freezeEnabledMods(instance)

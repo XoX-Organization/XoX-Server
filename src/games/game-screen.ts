@@ -121,6 +121,7 @@ abstract class GameScreen<
                     break
                 default:
                     await this.hostScreen(availableInstances[selectInstance])
+                    return
             }
             continue
         }
