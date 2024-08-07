@@ -7,7 +7,7 @@ import { $ } from "zx/core"
 import * as Core from "."
 import GameScreen from "./game-screen"
 
-interface MinecraftPersistedSchema extends Core.PersistedSchema {
+interface MinecraftJavaPersistedSchema extends Core.PersistedSchema {
     game_working_directory_path: string
 
     // The Minecraft Java Edition version
@@ -26,7 +26,7 @@ interface MinecraftPersistedSchema extends Core.PersistedSchema {
     game_java_version: number
 }
 
-class MinecraftPersistedObject extends Core.PersistedObject<MinecraftPersistedSchema> {
+class MinecraftJavaPersistedObject extends Core.PersistedObject<MinecraftJavaPersistedSchema> {
     gameWorkingDirectoryPath = this.raw.game_working_directory_path
     gameVersion = this.raw.game_version
     gameModloaderType = this.raw.game_modloader_type
@@ -36,17 +36,17 @@ class MinecraftPersistedObject extends Core.PersistedObject<MinecraftPersistedSc
     gameJavaVersion = this.raw.game_java_version
 }
 
-class MinecraftScreen extends GameScreen<
-    MinecraftPersistedSchema,
-    MinecraftPersistedObject
+class MinecraftJavaScreen extends GameScreen<
+    MinecraftJavaPersistedSchema,
+    MinecraftJavaPersistedObject
 > {
     protected persistence = new Core.Persistence<
-        MinecraftPersistedSchema,
-        MinecraftPersistedObject
-    >("game_minecraft_java", MinecraftPersistedObject)
+        MinecraftJavaPersistedSchema,
+        MinecraftJavaPersistedObject
+    >("game_minecraft_java", MinecraftJavaPersistedObject)
 
     protected updateMetadata = async (
-        metadata: Omit<MinecraftPersistedSchema, "id" | "timestamp">,
+        metadata: Omit<MinecraftJavaPersistedSchema, "id" | "timestamp">,
     ) => {
         const updateForms = [
             {
@@ -175,17 +175,18 @@ class MinecraftScreen extends GameScreen<
     }
 
     protected createScreen = async () => {
-        const metadata: Omit<MinecraftPersistedSchema, "id" | "timestamp"> = {
-            uuid: randomUUID().slice(0, 4),
-            name: "",
-            game_working_directory_path: "",
-            game_version: "",
-            game_modloader_type: "forge",
-            game_modloader_version: "",
-            game_max_ram: 6144,
-            game_min_ram: 6144,
-            game_java_version: 0,
-        }
+        const metadata: Omit<MinecraftJavaPersistedSchema, "id" | "timestamp"> =
+            {
+                uuid: randomUUID().slice(0, 4),
+                name: "",
+                game_working_directory_path: "",
+                game_version: "",
+                game_modloader_type: "forge",
+                game_modloader_version: "",
+                game_max_ram: 6144,
+                game_min_ram: 6144,
+                game_java_version: 0,
+            }
         const updatedMetadata = await this.updateMetadata(metadata)
         await this.persistence.createInstance(updatedMetadata)
     }
@@ -241,7 +242,7 @@ class MinecraftScreen extends GameScreen<
         }
     }
 
-    private setupModloader = async (metadata: MinecraftPersistedObject) => {
+    private setupModloader = async (metadata: MinecraftJavaPersistedObject) => {
         const forgeLibraryPath = `${metadata.gameWorkingDirectoryPath}/libraries/net/minecraftforge/forge/${metadata.gameVersion}-${metadata.gameModloaderVersion}`
         const forgeJarBaseFilename = `forge-${metadata.gameVersion}-${metadata.gameModloaderVersion}`
         const forgeServerJarPath = `${forgeLibraryPath}/${forgeJarBaseFilename}-server.jar`
@@ -263,28 +264,30 @@ class MinecraftScreen extends GameScreen<
             )
         ) {
             if (process.env.NODE_ENV === "development") {
-                console.log("Forge Server Jar Path:", forgeServerJarPath)
-                console.log("Forge Universal Jar Path:", forgeUniversalJarPath)
-                console.log("Forge Installer Jar Path:", forgeInstallerJarPath)
-                console.log("Forge Installer Jar URL:", forgeInstallerJarUrl)
-                console.log("Forge Legacy Jar Path:", forgeLegacyJarPath)
+                console.debug("Forge Server Jar Path:", forgeServerJarPath)
+                console.debug(
+                    "Forge Universal Jar Path:",
+                    forgeUniversalJarPath,
+                )
+                console.debug(
+                    "Forge Installer Jar Path:",
+                    forgeInstallerJarPath,
+                )
+                console.debug("Forge Installer Jar URL:", forgeInstallerJarUrl)
+                console.debug("Forge Legacy Jar Path:", forgeLegacyJarPath)
             }
-
             if (!fs.existsSync(forgeInstallerJarPath)) {
-                console.log("Downloading Forge Installer Jar")
                 await Core.downloadFile(
                     forgeInstallerJarUrl,
                     forgeInstallerJarPath,
                 )
             }
-
-            console.log("Installing Forge Library")
+            console.log("! Installing Forge Library")
             await $({
                 cwd: metadata.gameWorkingDirectoryPath,
             })`java -jar ${forgeInstallerJarPath} --installServer`.pipe(
                 new Core.WritableStream(),
             )
-            console.log("Removing Forge Installer Jar")
             fs.rmSync(forgeInstallerJarPath)
         }
 
@@ -293,14 +296,15 @@ class MinecraftScreen extends GameScreen<
             !fs.existsSync(fabricInstallerJarPath)
         ) {
             if (process.env.NODE_ENV === "development") {
-                console.log(
+                console.debug(
                     "Fabric Installer Jar Path:",
                     fabricInstallerJarPath,
                 )
-                console.log("Fabric Installer Jar URL:", fabricInstallerJarUrl)
+                console.debug(
+                    "Fabric Installer Jar URL:",
+                    fabricInstallerJarUrl,
+                )
             }
-
-            console.log("Downloading Fabric Installer Jar")
             await Core.downloadFile(
                 fabricInstallerJarUrl,
                 fabricInstallerJarPath,
@@ -317,12 +321,12 @@ class MinecraftScreen extends GameScreen<
         }
     }
 
-    private setupJava = (metadata: MinecraftPersistedObject) => {
+    private setupJava = (metadata: MinecraftJavaPersistedObject) => {
         const javaVersion = metadata.gameJavaVersion
         const javaPath = `/usr/lib/jvm/java-${javaVersion}-openjdk-amd64/bin/java`
 
         if (process.env.NODE_ENV === "development") {
-            console.log("Java Path:", javaPath)
+            console.debug("Java Path:", javaPath)
         }
         if (!fs.existsSync(javaPath)) {
             throw new Error(
@@ -333,7 +337,7 @@ class MinecraftScreen extends GameScreen<
         return javaPath
     }
 
-    private signEula = async (metadata: MinecraftPersistedObject) => {
+    private signEula = async (metadata: MinecraftJavaPersistedObject) => {
         const eulaPath = `${metadata.gameWorkingDirectoryPath}/eula.txt`
         const eulaText = [
             `#By changing the setting below to TRUE you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).`,
@@ -362,7 +366,7 @@ class MinecraftScreen extends GameScreen<
         return false
     }
 
-    protected hostScreen = async (instance: MinecraftPersistedObject) => {
+    protected hostScreen = async (instance: MinecraftJavaPersistedObject) => {
         const {
             forgeLibraryPath,
             forgeLegacyJarPath,
@@ -420,4 +424,4 @@ class MinecraftScreen extends GameScreen<
     }
 }
 
-export default new MinecraftScreen()
+export default new MinecraftJavaScreen()

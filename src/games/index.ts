@@ -57,7 +57,7 @@ export const steamUpdate = async ({
     ].join(" ")
 
     console.log(
-        `Updating Steam App ${steamAppId} ${
+        `! Updating Steam App ${steamAppId} ${
             steamAppBetaBranch ? `on branch ${steamAppBetaBranch})` : ``
         }`,
     )
@@ -109,8 +109,8 @@ export const createScreen = async <T extends PersistedObject>({
     ].join(" ")
 
     if (process.env.NODE_ENV === "development") {
-        console.log(
-            `Creating screen ${nameScreen(
+        console.debug(
+            `& Creating screen ${nameScreen(
                 metadata,
             )} with command:\n\n${command}\n\n`,
         )
@@ -203,7 +203,7 @@ export const downloadFile = async (url: string, outputPath: string) => {
 
     const totalLength = headers["content-length"]
     const progressBar = new ProgressBar(
-        "-> Downloading [:bar] :percent | ETA: :etas",
+        "> Downloading [:bar] :percent | ETA: :etas",
         {
             width: 40,
             complete: "█",

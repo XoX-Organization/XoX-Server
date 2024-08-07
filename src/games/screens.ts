@@ -1,4 +1,5 @@
-import minecraftScreen from "./minecraft-screen"
+import minecraftBedrockScreen from "./minecraft-bedrock-screen"
+import minecraftJavaScreen from "./minecraft-java-screen"
 import tmodloaderScreen from "./tmodloader-screen"
 
 export default [
@@ -8,6 +9,10 @@ export default [
     },
     {
         name: "Minecraft (Java Edition) (Vanilla | Modded)",
-        value: minecraftScreen,
+        value: minecraftJavaScreen,
+    },
+    {
+        name: "Minecraft (Bedrock Edition)",
+        value: minecraftBedrockScreen,
     },
 ]
