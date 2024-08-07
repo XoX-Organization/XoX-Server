@@ -1,6 +1,9 @@
+import axios from "axios"
+import fs from "fs"
 import knex, { Knex } from "knex"
 import os from "os"
-import fs from "fs"
+import ProgressBar from "progress"
+import { Writable } from "stream"
 import { $ } from "zx/core"
 
 $.quote = (str: string) => str
@@ -105,6 +108,13 @@ export const createScreen = async <T extends PersistedObject>({
         `exit 0"`,
     ].join(" ")
 
+    if (process.env.NODE_ENV === "development") {
+        console.log(
+            `Creating screen ${nameScreen(
+                metadata,
+            )} with command:\n\n${command}\n\n`,
+        )
+    }
     await $`${command}`
 }
 
@@ -177,5 +187,47 @@ export class PersistedObject<T extends PersistedSchema = PersistedSchema> {
         this.timestamp = this.raw.timestamp
         this.uuid = this.raw.uuid
         this.name = this.raw.name
+    }
+}
+
+// Extra
+
+export const downloadFile = async (url: string, outputPath: string) => {
+    const { data, headers, status } = await axios.get(url, {
+        responseType: "stream",
+    })
+
+    if (status !== 200) {
+        throw new Error(`Failed to download file from ${url}`)
+    }
+
+    const totalLength = headers["content-length"]
+    const progressBar = new ProgressBar(
+        "-> Downloading [:bar] :percent | ETA: :etas",
+        {
+            width: 40,
+            complete: "█",
+            incomplete: "░",
+            renderThrottle: 1,
+            total: parseInt(totalLength ?? "0"),
+        },
+    )
+
+    return new Promise<void>((resolve, reject) => {
+        data.on("data", (chunk: any) =>
+            totalLength ? progressBar.tick(chunk.length) : null,
+        )
+        data.on("end", () => resolve())
+        data.on("error", (err: any) => reject(err))
+        data.pipe(fs.createWriteStream(outputPath))
+    })
+}
+
+export class WritableStream extends Writable {
+    _write(chunk: any, encoding: string, callback: Function) {
+        if (process.env.NODE_ENV === "development") {
+            process.stdout.write(chunk)
+        }
+        callback()
     }
 }

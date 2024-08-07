@@ -8,7 +8,7 @@ class StartScreen implements Screen {
             message: "Which game would you like to start",
             choices: [
                 new Separator(),
-                ...screens,
+                ...(screens as { name: string; value: Screen }[]),
                 new Separator(),
                 {
                     name: "Quit",

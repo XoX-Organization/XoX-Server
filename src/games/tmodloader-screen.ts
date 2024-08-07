@@ -56,7 +56,7 @@ class TModLoaderScreen extends GameScreen<
                     (metadata.steam_app_beta_branch = value || undefined),
             },
             {
-                message: "Steam Username (Leave empty for anonymous)",
+                message: "Steam Username (Leave empty for default)",
                 default: metadata.steam_username,
                 callback: (value: string) =>
                     (metadata.steam_username = value || undefined),
@@ -102,7 +102,20 @@ class TModLoaderScreen extends GameScreen<
         return metadata
     }
 
-    private freezeEnabledMods = async (instance: TModLoaderPersistedObject) => {
+    protected createScreen = async () => {
+        const metadata: Omit<TModLoaderPersistedSchema, "id" | "timestamp"> = {
+            uuid: randomUUID().slice(0, 4),
+            name: "",
+            steam_app_beta_branch: undefined,
+            steam_username: undefined,
+            game_config_file_path: "",
+            game_save_folder_path: "",
+        }
+        const updatedMetadata = await this.updateMetadata(metadata)
+        await this.persistence.createInstance(updatedMetadata)
+    }
+
+    private freezeEnabledMods = (instance: TModLoaderPersistedObject) => {
         if (
             !fs.existsSync(
                 `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
@@ -120,19 +133,6 @@ class TModLoaderScreen extends GameScreen<
         )
     }
 
-    protected createScreen = async () => {
-        const metadata: Omit<TModLoaderPersistedSchema, "id" | "timestamp"> = {
-            uuid: randomUUID().slice(0, 4),
-            name: "",
-            steam_app_beta_branch: undefined,
-            steam_username: undefined,
-            game_config_file_path: "",
-            game_save_folder_path: "",
-        }
-        const updatedMetadata = await this.updateMetadata(metadata)
-        await this.persistence.createInstance(updatedMetadata)
-    }
-
     protected hostScreen = async (instance: TModLoaderPersistedObject) => {
         await Core.steamUpdate({
             steamAppId: TModLoaderScreen.steamAppId,
@@ -140,7 +140,7 @@ class TModLoaderScreen extends GameScreen<
             steamLoginAnonymous: false,
             steamUsername: instance.steamUsername,
         })
-        await this.freezeEnabledMods(instance)
+        this.freezeEnabledMods(instance)
         await Core.createScreen({
             metadata: instance,
             screenArgs: [
