@@ -63,14 +63,16 @@ export const steamUpdate = async ({
     )
     for (let i = 0; i < maxRetries; i++) {
         try {
-            await $`${command}`.pipe(process.stdout)
+            await $`${command}`.pipe(new CarriageReturnWritableStream())
             return
         } catch {
-            console.error("Steam update failed. Retrying...")
+            console.error(`! Steam App ${steamAppId} update failed. Retrying`)
             await new Promise((resolve) => setTimeout(resolve, 3000))
         }
     }
-    throw new Error(`Steam update failed after ${maxRetries} retries`)
+    throw new Error(
+        `Steam App ${steamAppId} update failed after ${maxRetries} retries under user ${chosenSteamUsername}`,
+    )
 }
 
 // Screen Handlers
@@ -143,7 +145,10 @@ export class Persistence<
         this.commit = knex({
             client: "sqlite3",
             connection: {
-                filename: "./appdata/game.sqlite3",
+                filename:
+                    process.env.NODE_ENV === "development"
+                        ? "./dist/game.sqlite3"
+                        : `${process.env.HOME}/.local/share/xox-server/game.sqlite3`,
             },
             useNullAsDefault: true,
         })
@@ -223,11 +228,19 @@ export const downloadFile = async (url: string, outputPath: string) => {
     })
 }
 
-export class WritableStream extends Writable {
+export class CarriageReturnWritableStream extends Writable {
     _write(chunk: any, encoding: string, callback: Function) {
-        if (process.env.NODE_ENV === "development") {
-            process.stdout.write(chunk)
-        }
+        chunk
+            .toString()
+            .split("\n")
+            .forEach((line: string) => {
+                if (line.trim().length <= 0) {
+                    return
+                }
+                process.stdout.write(
+                    `\r> ${line.trim()}`.padEnd(process.stdout.columns + 1),
+                )
+            })
         callback()
     }
 }

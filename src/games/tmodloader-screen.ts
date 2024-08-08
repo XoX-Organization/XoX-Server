@@ -116,21 +116,27 @@ class TModLoaderScreen extends GameScreen<
     }
 
     private freezeEnabledMods = (instance: TModLoaderPersistedObject) => {
-        if (
-            !fs.existsSync(
-                `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
-            )
-        ) {
+        try {
+            if (
+                !fs.existsSync(
+                    `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
+                )
+            ) {
+                fs.copyFileSync(
+                    `${instance.gameSaveFolderPath}/Mods/enabled.json`,
+                    `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
+                )
+            }
+            fs.rmSync(`${instance.gameSaveFolderPath}/Mods/enabled.json`)
             fs.copyFileSync(
-                `${instance.gameSaveFolderPath}/Mods/enabled.json`,
                 `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
+                `${instance.gameSaveFolderPath}/Mods/enabled.json`,
+            )
+        } catch (error) {
+            throw new Error(
+                `${error}. Perhaps you provided the wrong path for the game save folder.`,
             )
         }
-        fs.rmSync(`${instance.gameSaveFolderPath}/Mods/enabled.json`)
-        fs.copyFileSync(
-            `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
-            `${instance.gameSaveFolderPath}/Mods/enabled.json`,
-        )
     }
 
     protected hostScreen = async (instance: TModLoaderPersistedObject) => {

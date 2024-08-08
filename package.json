@@ -3,11 +3,13 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "build": "webpack",
-        "clean": "rm -rf dist",
-        "migrate": "mkdir -p appdata && npx knex migrate:latest",
-        "start": "NODE_ENV=development && node dist/main.js",
-        "start:prod": "NODE_ENV=production && node dist/main.js"
+        "build": "NODE_ENV=development webpack",
+        "build:prod": "NODE_ENV=production webpack",
+        "start": "NODE_ENV=development node dist/main.js",
+        "start:prod": "NODE_ENV=production node dist/main.js",
+        "migrate": "npx knex migrate:latest --env development",
+        "migrate:prod": "npx knex migrate:latest --env production",
+        "clean": "rm -rf dist"
     },
     "repository": {
         "type": "git",
@@ -24,7 +26,6 @@
         "@inquirer/prompts": "^5.1.0",
         "axios": "^1.7.3",
         "cheerio": "^1.0.0-rc.12",
-        "commander": "^12.1.0",
         "knex": "^3.1.0",
         "progress": "^2.0.3",
         "sqlite3": "^5.1.7",

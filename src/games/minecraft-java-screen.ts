@@ -286,7 +286,7 @@ class MinecraftJavaScreen extends GameScreen<
             await $({
                 cwd: metadata.gameWorkingDirectoryPath,
             })`java -jar ${forgeInstallerJarPath} --installServer`.pipe(
-                new Core.WritableStream(),
+                new Core.CarriageReturnWritableStream(),
             )
             fs.rmSync(forgeInstallerJarPath)
         }

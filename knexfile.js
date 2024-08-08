@@ -1,12 +1,22 @@
+const configs = {
+    client: "sqlite3",
+    useNullAsDefault: true,
+    migrations: {
+        directory: "./src/games/migrations",
+    },
+}
+
 module.exports = {
     development: {
-        client: "sqlite3",
+        ...configs,
         connection: {
-            filename: "./appdata/game.sqlite3",
+            filename: "./dist/game.sqlite3",
         },
-        useNullAsDefault: true,
-        migrations: {
-            directory: "./src/games/migrations",
+    },
+    production: {
+        ...configs,
+        connection: {
+            filename: `${process.env.HOME}/.local/share/xox-server/game.sqlite3`,
         },
     },
 }

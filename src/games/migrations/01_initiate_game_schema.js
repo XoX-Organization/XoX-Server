@@ -3,6 +3,28 @@
  * @returns { Promise<void> }
  */
 exports.up = async (knex) => {
+    await knex.schema.createTable("game_terraria", (table) => {
+        table.increments("id").primary()
+        table.datetime("timestamp").defaultTo(knex.fn.now())
+
+        table.string("uuid").notNullable().unique()
+        table.string("name").notNullable()
+
+        table.string("steam_app_beta_branch").nullable()
+        table.string("steam_username").nullable()
+
+        table.integer("game_autocreate").checkPositive().notNullable()
+        table.string("game_worldname").notNullable()
+        table.string("game_seed").nullable()
+
+        table.integer("game_port").checkPositive().notNullable()
+        table.integer("game_maxplayers").checkPositive().notNullable()
+        table.string("game_pass").nullable()
+        table.string("game_motd").nullable()
+        table.boolean("game_secure").notNullable()
+        table.boolean("game_noupnp").notNullable()
+    })
+
     await knex.schema.createTable("game_tmodloader", (table) => {
         table.increments("id").primary()
         table.datetime("timestamp").defaultTo(knex.fn.now())
