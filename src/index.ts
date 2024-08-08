@@ -12,7 +12,16 @@ if (process.getuid && process.getuid() === 0) {
 }
 
 const main = async () => {
-    await startScreen.show()
+    try {
+        await startScreen.show()
+    } catch (error: any) {
+        if (process.env.NODE_ENV === "development") {
+            throw error
+        } else {
+            console.error(`An error has occured, ${error.message}`)
+            process.exit(1)
+        }
+    }
 }
 
 main()
