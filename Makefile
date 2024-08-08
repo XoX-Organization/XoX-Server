@@ -10,6 +10,7 @@ install:
 	npm run migrate:prod
 
 setup-start-script:
+	mkdir -p $(LOCAL_BIN_DIR)
 	ln -sf $(realpath $(SERVER_SCRIPT)) $(LOCAL_BIN_DIR)/xox-server
 	chmod +x $(LOCAL_BIN_DIR)/xox-server
 
