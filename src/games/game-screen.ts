@@ -69,6 +69,7 @@ abstract class GameScreen<
         while (true) {
             const availableInstances = await this.persistence.findAllInstances()
             const selectInstance = await select({
+                loop: false,
                 message:
                     availableInstances.length > 0
                         ? "Which instance would you like to play with"
@@ -121,7 +122,7 @@ abstract class GameScreen<
                     break
                 default:
                     await this.hostScreen(availableInstances[selectInstance])
-                    return
+                    break
             }
             continue
         }

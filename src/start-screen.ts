@@ -4,22 +4,26 @@ import screens from "./games/screens"
 
 class StartScreen implements Screen {
     show = async () => {
-        const game: Screen | undefined = await select({
-            message: "Which game would you like to start",
-            choices: [
-                new Separator(),
-                ...(screens as { name: string; value: Screen }[]),
-                new Separator(),
-                {
-                    name: "Quit",
-                    value: undefined,
-                },
-            ],
-        })
-        if (game) {
-            await game.show()
+        while (true) {
+            const game: Screen | undefined = await select({
+                loop: false,
+                message: "Which game would you like to start",
+                choices: [
+                    new Separator(),
+                    ...(screens as { name: string; value: Screen }[]),
+                    new Separator(),
+                    {
+                        name: "Quit",
+                        value: undefined,
+                    },
+                ],
+            })
+            if (game) {
+                await game.show()
+                continue
+            }
+            return
         }
-        return
     }
 }
 

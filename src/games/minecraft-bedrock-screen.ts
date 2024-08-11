@@ -148,7 +148,10 @@ class MinecraftBedrockScreen extends GameScreen<
         const installerPath = `${metadata.gameWorkingDirectoryPath}/bedrock-server-${metadata.gameServerVersion}.zip`
 
         if (!fs.existsSync(installerPath)) {
-            await Core.downloadFile(installerUrl, installerPath)
+            console.log(
+                "! Downloading Minecraft Bedrock Dedicated Server installer",
+            )
+            await Core.download(installerUrl, installerPath)
         }
 
         console.log("! Extracting Minecraft Bedrock Dedicated Server installer")

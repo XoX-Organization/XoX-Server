@@ -14,11 +14,12 @@ if (process.getuid && process.getuid() === 0) {
 const main = async () => {
     try {
         await startScreen.show()
+        process.exit(0)
     } catch (error: any) {
         if (process.env.NODE_ENV === "development") {
             throw error
         } else {
-            console.error(`An error has occured, ${error.message}`)
+            console.error(`\nX Runtime Exception, ${error.message}\n`)
             process.exit(1)
         }
     }

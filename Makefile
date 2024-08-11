@@ -1,23 +1,24 @@
-# Define variables
-LOCAL_SHARE_DIR := ~/.local/share/xox-server
-LOCAL_BIN_DIR := ~/.local/bin
-SERVER_SCRIPT := xox-server.sh
+APP_DIR := ~/.xox-server
+BIN_DIR := ~/.xox-server/.bin
+EXEC_PATH := ~/.local/bin/xox-server
 
 install:
-	mkdir -p $(LOCAL_SHARE_DIR)
+	mkdir -p ~/.local/bin
+	mkdir -p $(BIN_DIR)
+
 	npm install
 	npm run build:prod
 	npm run migrate:prod
 
-setup-start-script:
-	mkdir -p $(LOCAL_BIN_DIR)
-	ln -sf $(realpath $(SERVER_SCRIPT)) $(LOCAL_BIN_DIR)/xox-server
-	chmod +x $(LOCAL_BIN_DIR)/xox-server
+	cp dist/main.js $(BIN_DIR)/xox-server
+	sed -i '1i #!/usr/bin/env node' $(BIN_DIR)/xox-server
+	chmod +x $(BIN_DIR)/xox-server
 
-clean:
-	rm -rf dist node_modules
+	ln -sf $(BIN_DIR)/xox-server $(EXEC_PATH)
+	cp -r node_modules $(BIN_DIR)/node_modules
 
 uninstall:
-	rm -f $(LOCAL_BIN_DIR)/xox-server
+	rm -f $(EXEC_PATH)
+	rm -rf $(BIN_DIR)
 
-all: install setup-start-script
+all: uninstall install

@@ -1,6 +1,6 @@
 import axios from "axios"
 import fs from "fs"
-import knex, { Knex } from "knex"
+import sqlite3 from "sqlite3"
 import os from "os"
 import ProgressBar from "progress"
 import { Writable } from "stream"
@@ -66,7 +66,7 @@ export const steamUpdate = async ({
             await $`${command}`.pipe(new CarriageReturnWritableStream())
             return
         } catch {
-            console.error(`! Steam App ${steamAppId} update failed. Retrying`)
+            console.error(`X Steam App ${steamAppId} update failed. Retrying`)
             await new Promise((resolve) => setTimeout(resolve, 3000))
         }
     }
@@ -138,43 +138,85 @@ export class Persistence<
     U extends PersistedObject<T>,
 > {
     protected persistedConstructor: new (data: any) => U
-    protected commit: Knex
+    protected db: sqlite3.Database
     protected table: string
 
     constructor(table: string, persistedConstructor: new (data: any) => U) {
-        this.commit = knex({
-            client: "sqlite3",
-            connection: {
-                filename:
-                    process.env.NODE_ENV === "development"
-                        ? "./dist/game.sqlite3"
-                        : `${process.env.HOME}/.local/share/xox-server/game.sqlite3`,
-            },
-            useNullAsDefault: true,
-        })
+        this.db = new sqlite3.Database(
+            process.env.NODE_ENV === "development"
+                ? "./dist/appdata.sqlite3"
+                : `${process.env.HOME}/.xox-server/appdata.sqlite3`,
+        )
 
         this.persistedConstructor = persistedConstructor
         this.table = table
     }
 
-    findAllInstances = async () => {
-        const rows = await this.commit.select("*").from(this.table)
-        return rows.map((row: U) => new this.persistedConstructor(row))
+    findAllInstances = async (): Promise<U[]> => {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT * FROM ${this.table}`
+            this.db.all(sql, [], (err, rows) => {
+                if (err) {
+                    return reject(err)
+                }
+                resolve(
+                    rows.map((row: any) => new this.persistedConstructor(row)),
+                )
+            })
+        })
     }
 
-    createInstance = async (metadata: Omit<T, "id" | "timestamp">) => {
-        return this.commit.insert(metadata).into(this.table)
+    createInstance = async (
+        metadata: Omit<T, "id" | "timestamp">,
+    ): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            const columns = Object.keys(metadata).join(", ")
+            const placeholders = Object.keys(metadata)
+                .map(() => "?")
+                .join(", ")
+            const sql = `INSERT INTO ${this.table} (${columns}) VALUES (${placeholders})`
+            const values = Object.values(metadata)
+
+            this.db.run(sql, values, function (err) {
+                if (err) {
+                    return reject(err)
+                }
+                resolve()
+            })
+        })
     }
 
     updateInstance = async (
         uuid: string,
         metadata: Omit<T, "id" | "timestamp">,
-    ) => {
-        return this.commit.update(metadata).from(this.table).where({ uuid })
+    ): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            const updates = Object.keys(metadata)
+                .map((key) => `${key} = ?`)
+                .join(", ")
+            const sql = `UPDATE ${this.table} SET ${updates} WHERE uuid = ?`
+            const values = [...Object.values(metadata), uuid]
+
+            this.db.run(sql, values, function (err) {
+                if (err) {
+                    return reject(err)
+                }
+                resolve()
+            })
+        })
     }
 
-    deleteInstance = async (uuid: string) => {
-        return this.commit.delete().from(this.table).where({ uuid })
+    deleteInstance = async (uuid: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            const sql = `DELETE FROM ${this.table} WHERE uuid = ?`
+
+            this.db.run(sql, [uuid], function (err) {
+                if (err) {
+                    return reject(err)
+                }
+                resolve()
+            })
+        })
     }
 }
 
@@ -197,7 +239,7 @@ export class PersistedObject<T extends PersistedSchema = PersistedSchema> {
 
 // Extra
 
-export const downloadFile = async (url: string, outputPath: string) => {
+export const download = async (url: string, outputPath: string) => {
     const { data, headers, status } = await axios.get(url, {
         responseType: "stream",
     })
@@ -207,16 +249,13 @@ export const downloadFile = async (url: string, outputPath: string) => {
     }
 
     const totalLength = headers["content-length"]
-    const progressBar = new ProgressBar(
-        "> Downloading [:bar] :percent | ETA: :etas",
-        {
-            width: 40,
-            complete: "█",
-            incomplete: "░",
-            renderThrottle: 1,
-            total: parseInt(totalLength ?? "0"),
-        },
-    )
+    const progressBar = new ProgressBar("> [:bar] :percent | ETA: :etas", {
+        width: 40,
+        complete: "█",
+        incomplete: "░",
+        renderThrottle: 1,
+        total: parseInt(totalLength ?? "0"),
+    })
 
     return new Promise<void>((resolve, reject) => {
         data.on("data", (chunk: any) =>
@@ -234,11 +273,14 @@ export class CarriageReturnWritableStream extends Writable {
             .toString()
             .split("\n")
             .forEach((line: string) => {
-                if (line.trim().length <= 0) {
+                const message = line.trim()
+                if (message.length <= 0) {
                     return
                 }
                 process.stdout.write(
-                    `\r> ${line.trim()}`.padEnd(process.stdout.columns + 1),
+                    `\r> ${message.slice(0, process.stdout.columns)}`.padEnd(
+                        process.stdout.columns + 1,
+                    ),
                 )
             })
         callback()

@@ -264,23 +264,24 @@ class MinecraftJavaScreen extends GameScreen<
             )
         ) {
             if (process.env.NODE_ENV === "development") {
-                console.debug("Forge Server Jar Path:", forgeServerJarPath)
+                console.debug("& Forge Server Jar Path:", forgeServerJarPath)
                 console.debug(
-                    "Forge Universal Jar Path:",
+                    "& Forge Universal Jar Path:",
                     forgeUniversalJarPath,
                 )
                 console.debug(
-                    "Forge Installer Jar Path:",
+                    "& Forge Installer Jar Path:",
                     forgeInstallerJarPath,
                 )
-                console.debug("Forge Installer Jar URL:", forgeInstallerJarUrl)
-                console.debug("Forge Legacy Jar Path:", forgeLegacyJarPath)
+                console.debug(
+                    "& Forge Installer Jar URL:",
+                    forgeInstallerJarUrl,
+                )
+                console.debug("& Forge Legacy Jar Path:", forgeLegacyJarPath)
             }
             if (!fs.existsSync(forgeInstallerJarPath)) {
-                await Core.downloadFile(
-                    forgeInstallerJarUrl,
-                    forgeInstallerJarPath,
-                )
+                console.log("! Downloading Forge Installer Jar")
+                await Core.download(forgeInstallerJarUrl, forgeInstallerJarPath)
             }
             console.log("! Installing Forge Library")
             await $({
@@ -297,18 +298,16 @@ class MinecraftJavaScreen extends GameScreen<
         ) {
             if (process.env.NODE_ENV === "development") {
                 console.debug(
-                    "Fabric Installer Jar Path:",
+                    "& Fabric Installer Jar Path:",
                     fabricInstallerJarPath,
                 )
                 console.debug(
-                    "Fabric Installer Jar URL:",
+                    "& Fabric Installer Jar URL:",
                     fabricInstallerJarUrl,
                 )
             }
-            await Core.downloadFile(
-                fabricInstallerJarUrl,
-                fabricInstallerJarPath,
-            )
+            console.log("! Downloading Fabric Installer Jar")
+            await Core.download(fabricInstallerJarUrl, fabricInstallerJarPath)
         }
 
         return {
@@ -326,7 +325,7 @@ class MinecraftJavaScreen extends GameScreen<
         const javaPath = `/usr/lib/jvm/java-${javaVersion}-openjdk-amd64/bin/java`
 
         if (process.env.NODE_ENV === "development") {
-            console.debug("Java Path:", javaPath)
+            console.debug("& Java Path:", javaPath)
         }
         if (!fs.existsSync(javaPath)) {
             throw new Error(

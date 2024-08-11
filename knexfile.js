@@ -10,13 +10,13 @@ module.exports = {
     development: {
         ...configs,
         connection: {
-            filename: "./dist/game.sqlite3",
+            filename: "./dist/appdata.sqlite3",
         },
     },
     production: {
         ...configs,
         connection: {
-            filename: `${process.env.HOME}/.local/share/xox-server/game.sqlite3`,
+            filename: `${process.env.HOME}/.xox-server/appdata.sqlite3`,
         },
     },
 }

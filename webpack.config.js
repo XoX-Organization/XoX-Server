@@ -1,12 +1,16 @@
 const path = require("path")
 const webpackNodeExternals = require("webpack-node-externals")
 
+const onEnvironment = (development, production) => {
+    return process.env.NODE_ENV === "development" ? development : production
+}
+
 module.exports = {
-    devtool: "inline-source-map",
+    devtool: onEnvironment("inline-source-map", false),
     entry: {
         main: "./src/index",
     },
-    mode: process.env.NODE_ENV || "development",
+    mode: onEnvironment("development", "production"),
     target: "node",
     externals: [webpackNodeExternals()],
     output: {
