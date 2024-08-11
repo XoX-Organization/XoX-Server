@@ -7,15 +7,35 @@ import GameScreen from "./game-screen"
 interface TModLoaderPersistedSchema extends Core.PersistedSchema {
     steam_app_beta_branch?: string
     steam_username?: string
-    game_config_file_path: string
-    game_save_folder_path: string
+
+    game_working_directory_path: string
+
+    game_autocreate: 1 | 2 | 3
+    game_seed?: string
+
+    game_port: number
+    game_maxplayers: number
+    game_pass?: string
+    game_motd?: string
+    game_secure?: boolean
+    game_noupnp?: boolean
 }
 
 class TModLoaderPersistedObject extends Core.PersistedObject<TModLoaderPersistedSchema> {
     steamAppBetaBranch = this.raw.steam_app_beta_branch
     steamUsername = this.raw.steam_username
-    gameConfigFilePath = this.raw.game_config_file_path
-    gameSaveFolderPath = this.raw.game_save_folder_path
+
+    gameWorkingDirectoryPath = this.raw.game_working_directory_path
+
+    gameAutocreate = this.raw.game_autocreate
+    gameSeed = this.raw.game_seed
+
+    gamePort = this.raw.game_port
+    gameMaxPlayers = this.raw.game_maxplayers
+    gamePass = this.raw.game_pass
+    gameMotd = this.raw.game_motd
+    gameSecure = this.raw.game_secure
+    gameNoUPnP = this.raw.game_noupnp
 }
 
 class TModLoaderScreen extends GameScreen<
@@ -62,25 +82,8 @@ class TModLoaderScreen extends GameScreen<
                     (metadata.steam_username = value || undefined),
             },
             {
-                message:
-                    "Game Config File Path (e.g. /path/to/serverconfig.txt)",
-                default: metadata.game_config_file_path,
-                validate: (value: string) => {
-                    return value.trim().length > 0
-                        ? fs.existsSync(value)
-                            ? fs.statSync(value).isFile()
-                                ? true
-                                : "Path is not a file"
-                            : "Path does not exist"
-                        : "Path cannot be empty"
-                },
-                callback: (value: string) => {
-                    metadata.game_config_file_path = value
-                },
-            },
-            {
-                message: "Game Save Folder Path (e.g. /path/to/SaveData)",
-                default: metadata.game_save_folder_path,
+                message: "Working Directory Path (e.g. /path/to/SaveData)",
+                default: metadata.game_working_directory_path,
                 validate: (value: string) => {
                     return value.trim().length > 0
                         ? fs.existsSync(value)
@@ -91,7 +94,50 @@ class TModLoaderScreen extends GameScreen<
                         : "Path cannot be empty"
                 },
                 callback: (value: string) => {
-                    metadata.game_save_folder_path = value
+                    metadata.game_working_directory_path = value
+                },
+            },
+            {
+                message: "Game World Size (1=small, 2=medium, 3=large)",
+                default: metadata.game_autocreate?.toString(),
+                validate: (value: string) => {
+                    return value === "1" || value === "2" || value === "3"
+                        ? true
+                        : "World size must be 1, 2 or 3"
+                },
+                callback: (value: string) => {
+                    metadata.game_autocreate = parseInt(value) as 1 | 2 | 3
+                },
+            },
+            {
+                message: "Game Seed (Leave empty for random)",
+                default: metadata.game_seed,
+                callback: (value: string) => {
+                    metadata.game_seed = value || undefined
+                },
+            },
+            {
+                message: "Game Port (e.g. 7777)",
+                default: metadata.game_port?.toString(),
+                validate: (value: string) => {
+                    return value.length > 0 ? true : "Port cannot be empty"
+                },
+                callback: (value: string) => {
+                    metadata.game_port = parseInt(value)
+                },
+            },
+            {
+                message: "Game Password (Leave empty for none)",
+                default: metadata.game_pass,
+                callback: (value: string) => {
+                    metadata.game_pass = value || undefined
+                },
+            },
+            {
+                message: "Game Message of the Day (Leave empty for none)",
+                default: metadata.game_motd,
+                callback: (value: string) => {
+                    metadata.game_motd = value || undefined
                 },
             },
         ]
@@ -108,29 +154,45 @@ class TModLoaderScreen extends GameScreen<
             name: "",
             steam_app_beta_branch: undefined,
             steam_username: undefined,
-            game_config_file_path: "",
-            game_save_folder_path: "",
+
+            game_working_directory_path: "",
+
+            game_autocreate: 1,
+            game_seed: undefined,
+
+            game_port: 7777,
+            game_maxplayers: 16,
+            game_pass: undefined,
+            game_motd: undefined,
+            game_secure: true,
+            game_noupnp: true,
         }
         const updatedMetadata = await this.updateMetadata(metadata)
         await this.persistence.createInstance(updatedMetadata)
     }
 
     private freezeEnabledMods = (instance: TModLoaderPersistedObject) => {
+        if (!fs.existsSync(`${instance.gameWorkingDirectoryPath}/Mods`)) {
+            console.warn(
+                `! Mods folder not found at ${instance.gameWorkingDirectoryPath}/Mods, assuming this is a clean installation.`,
+            )
+            return
+        }
         try {
             if (
                 !fs.existsSync(
-                    `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
+                    `${instance.gameWorkingDirectoryPath}/Mods/enabled.json.constant`,
                 )
             ) {
                 fs.copyFileSync(
-                    `${instance.gameSaveFolderPath}/Mods/enabled.json`,
-                    `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
+                    `${instance.gameWorkingDirectoryPath}/Mods/enabled.json`,
+                    `${instance.gameWorkingDirectoryPath}/Mods/enabled.json.constant`,
                 )
             }
-            fs.rmSync(`${instance.gameSaveFolderPath}/Mods/enabled.json`)
+            fs.rmSync(`${instance.gameWorkingDirectoryPath}/Mods/enabled.json`)
             fs.copyFileSync(
-                `${instance.gameSaveFolderPath}/Mods/enabled.json.constant`,
-                `${instance.gameSaveFolderPath}/Mods/enabled.json`,
+                `${instance.gameWorkingDirectoryPath}/Mods/enabled.json.constant`,
+                `${instance.gameWorkingDirectoryPath}/Mods/enabled.json`,
             )
         } catch (error) {
             throw new Error(
@@ -152,9 +214,18 @@ class TModLoaderScreen extends GameScreen<
             screenArgs: [
                 TModLoaderScreen.steamAppPath,
                 `-nosteam`,
-                `-config "${instance.gameConfigFilePath}"`,
-                `-tmlsavedirectory "${instance.gameSaveFolderPath}"`,
+                `-tmlsavedirectory "${instance.gameWorkingDirectoryPath}"`,
                 `-steamworkshopfolder none`,
+                `-world "${instance.gameWorkingDirectoryPath}/Worlds/world.wld"`,
+                `-autocreate ${instance.gameAutocreate}`,
+                `-worldname "world"`,
+                instance.gameSeed ? `-seed "${instance.gameSeed}"` : "",
+                `-port ${instance.gamePort}`,
+                `-maxplayers ${instance.gameMaxPlayers}`,
+                instance.gamePass ? `-password "${instance.gamePass}"` : "",
+                instance.gameMotd ? `-motd "${instance.gameMotd}"` : "",
+                instance.gameSecure ? "-secure" : "",
+                instance.gameNoUPnP ? "-noupnp" : "",
             ],
         })
         const attachToScreen = await confirm({
