@@ -1,8 +1,9 @@
 import axios from "axios"
+import { randomUUID } from "crypto"
 import fs from "fs"
-import sqlite3 from "sqlite3"
 import os from "os"
 import ProgressBar from "progress"
+import sqlite3 from "sqlite3"
 import { Writable } from "stream"
 import { $ } from "zx/core"
 
@@ -58,8 +59,8 @@ export const steamUpdate = async ({
 
     console.log(
         `! Updating Steam App ${steamAppId} ${
-            steamAppBetaBranch ? `on branch ${steamAppBetaBranch})` : ``
-        }`,
+            steamAppBetaBranch ? `on branch ${steamAppBetaBranch}) ` : ``
+        }logged in as ${chosenSteamUsername}`,
     )
     for (let i = 0; i < maxRetries; i++) {
         try {
@@ -89,9 +90,11 @@ export const existsScreen = async <T extends PersistedObject>(metadata: T) => {
 export const createScreen = async <T extends PersistedObject>({
     metadata,
     screenArgs,
+    cwd,
 }: {
     metadata: T
     screenArgs: string[]
+    cwd?: string
 }) => {
     if (await existsScreen(metadata)) {
         throw new Error(
@@ -100,6 +103,7 @@ export const createScreen = async <T extends PersistedObject>({
     }
 
     const command = [
+        cwd ? `cd "${cwd}";` : ``,
         `screen`,
         `-dm`,
         `-S ${nameScreen(metadata)}`,
@@ -167,15 +171,16 @@ export class Persistence<
     }
 
     createInstance = async (
-        metadata: Omit<T, "id" | "timestamp">,
+        metadata: Omit<T, "id" | "timestamp" | "uuid">,
     ): Promise<void> => {
         return new Promise((resolve, reject) => {
-            const columns = Object.keys(metadata).join(", ")
-            const placeholders = Object.keys(metadata)
+            const data = { ...metadata, uuid: randomUUID().slice(0, 4) }
+            const columns = Object.keys(data).join(", ")
+            const placeholders = Object.keys(data)
                 .map(() => "?")
                 .join(", ")
             const sql = `INSERT INTO ${this.table} (${columns}) VALUES (${placeholders})`
-            const values = Object.values(metadata)
+            const values = Object.values(data)
 
             this.db.run(sql, values, function (err) {
                 if (err) {
@@ -188,7 +193,7 @@ export class Persistence<
 
     updateInstance = async (
         uuid: string,
-        metadata: Omit<T, "id" | "timestamp">,
+        metadata: Omit<T, "id" | "timestamp" | "uuid">,
     ): Promise<void> => {
         return new Promise((resolve, reject) => {
             const updates = Object.keys(metadata)

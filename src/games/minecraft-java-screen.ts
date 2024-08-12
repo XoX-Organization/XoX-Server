@@ -1,7 +1,6 @@
 import { confirm, input } from "@inquirer/prompts"
 import axios from "axios"
 import * as cheerio from "cheerio"
-import { randomUUID } from "crypto"
 import fs from "fs"
 import { $ } from "zx/core"
 import * as Core from "."
@@ -40,15 +39,146 @@ class MinecraftJavaScreen extends GameScreen<
     MinecraftJavaPersistedSchema,
     MinecraftJavaPersistedObject
 > {
+    public static minecraftJavaVersionMapping: Record<string, number> = {
+        // https://minecraft.fandom.com/wiki/Tutorials/Update_Java#Why_update?
+        8: 8,
+        9: 8,
+        10: 8,
+        11: 8,
+        12: 8,
+        13: 8,
+        14: 8,
+        15: 8,
+        16: 8,
+        17: 16,
+        18: 17,
+        19: 17,
+        20: 21, // Supposed to be Java 17
+        21: 21,
+        22: 21, // Followings are not released yet
+        23: 21,
+        24: 21,
+        25: 21,
+        26: 21,
+    }
+
     protected persistence = new Core.Persistence<
         MinecraftJavaPersistedSchema,
         MinecraftJavaPersistedObject
     >("game_minecraft_java", MinecraftJavaPersistedObject)
 
-    protected updateMetadata = async (
-        metadata: Omit<MinecraftJavaPersistedSchema, "id" | "timestamp">,
+    protected metadataDefaultSchema: Omit<
+        MinecraftJavaPersistedSchema,
+        "id" | "timestamp" | "uuid"
+    > = {
+        name: "",
+        game_working_directory_path: "",
+        game_version: "",
+        game_modloader_type: "forge",
+        game_modloader_version: "",
+        game_max_ram: 6144,
+        game_min_ram: 6144,
+        game_java_version: 0,
+    }
+
+    private isVersionExists = async (
+        type: "minecraft" | "forge" | "fabric",
+        minecraftVersion: string,
+        modloaderVersion?: string,
     ) => {
-        const updateForms = [
+        try {
+            switch (type) {
+                case "minecraft":
+                    const { status: minecraftStatus } = await axios.head(
+                        `https://files.minecraftforge.net/net/minecraftforge/forge/index_${minecraftVersion}.html`,
+                    )
+                    return minecraftStatus === 200
+
+                case "forge":
+                    const { status: forgeStatus } = await axios.head(
+                        `http://files.minecraftforge.net/maven/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}`,
+                    )
+                    return forgeStatus === 203
+
+                case "fabric":
+                    const { data: fabricData } = await axios.get(
+                        `https://meta.fabricmc.net/v2/versions/loader`,
+                    )
+                    const fabricVersions = fabricData.map(
+                        (version: any) => version.version,
+                    )
+                    return fabricVersions.includes(modloaderVersion)
+
+                default:
+                    return false
+            }
+        } catch {
+            return false
+        }
+    }
+
+    private retrieveVersion = async (
+        modloaderType: "forge" | "fabric",
+        minecraftVersion: string,
+    ) => {
+        const forgeHomepage = `https://files.minecraftforge.net/net/minecraftforge/forge/index_${minecraftVersion}.html`
+        const fabricHomepage = `https://meta.fabricmc.net/v2/versions/loader`
+
+        switch (modloaderType) {
+            case "forge":
+                const { data: forgeData } = await axios.get(forgeHomepage)
+                const forgeContent = cheerio.load(forgeData)
+                const forgeVersion = forgeContent("i.fa.promo-latest")
+                    .parent()
+                    .find("br + small")
+                    .text()
+                    .replace(/ /g, "")
+                    .split("-")[1]
+
+                if (!forgeVersion) {
+                    throw new Error(
+                        `Forge version not found for Minecraft ${minecraftVersion}`,
+                    )
+                }
+                return forgeVersion
+
+            case "fabric":
+                const { data: fabricData } = await axios.get(fabricHomepage)
+                const fabricStableVersions = fabricData.filter(
+                    (version: any) => version.stable,
+                )
+                const fabricVersion = fabricStableVersions.sort(
+                    (a: any, b: any) => {
+                        const aParts = a.version.split(".").map(Number)
+                        const bParts = b.version.split(".").map(Number)
+                        for (
+                            let i = 0;
+                            i < Math.max(aParts.length, bParts.length);
+                            i++
+                        ) {
+                            if ((aParts[i] || 0) > (bParts[i] || 0)) return -1
+                            if ((aParts[i] || 0) < (bParts[i] || 0)) return 1
+                        }
+                        return 0
+                    },
+                )[0].version
+
+                return fabricVersion
+
+            default:
+                throw new Error(
+                    `Modloader type ${modloaderType} is not supported`,
+                )
+        }
+    }
+
+    protected promptMetadataConfiguration = async (
+        metadata: Omit<
+            MinecraftJavaPersistedSchema,
+            "id" | "timestamp" | "uuid"
+        >,
+    ) => {
+        for (const prompt of [
             {
                 message: "Name (e.g. All-The-Mods-6-3.4.5)",
                 default: metadata.name,
@@ -81,11 +211,10 @@ class MinecraftJavaScreen extends GameScreen<
             {
                 message: "Minecraft Java Edition Version (e.g. 1.16.5)",
                 default: metadata.game_version,
-                validate: (value: string) => {
-                    const versionRegex = /^(?!.*\.0$).+$/
-                    return versionRegex.test(value.trim())
+                validate: async (value: string) => {
+                    return (await this.isVersionExists("minecraft", value))
                         ? true
-                        : "Version cannot be empty or end with .0"
+                        : "Version does not exist"
                 },
                 callback: (value: string) => {
                     metadata.game_version = value.trim()
@@ -106,18 +235,48 @@ class MinecraftJavaScreen extends GameScreen<
                     metadata.game_modloader_type = value as "forge" | "fabric"
                 },
             },
+        ]) {
+            prompt.callback(await input(prompt))
+        }
+
+        console.log(
+            "! Retrieving Modloader Versions, this may take few seconds",
+        )
+
+        metadata.game_modloader_version =
+            metadata.game_modloader_version ||
+            (await this.retrieveVersion(
+                metadata.game_modloader_type,
+                metadata.game_version,
+            ))
+
+        metadata.game_java_version =
+            metadata.game_java_version ||
+            MinecraftJavaScreen.minecraftJavaVersionMapping[
+                metadata.game_version.split(".")[1]
+            ]
+
+        for (const prompt of [
             {
-                message:
-                    "Modloader Version (Leave empty for latest version, e.g. 36.1.0)",
-                default:
-                    metadata.game_modloader_version ||
-                    (() =>
-                        this.retrieveVersion(
-                            metadata.game_modloader_type,
-                            metadata.game_version,
-                        )),
-                validate: (value: string) => {
-                    return value.length > 0 ? true : "Version cannot be empty"
+                message: [
+                    `\u001b]8;;`,
+                    metadata.game_modloader_type === "forge"
+                        ? `https://files.minecraftforge.net/net/minecraftforge/forge/index_${metadata.game_version}.html`
+                        : `https://meta.fabricmc.net/v2/versions/loader`,
+                    `\u0007`,
+                    `Modloader Version (Leave empty for latest version, e.g. ${metadata.game_modloader_version})`,
+                    `\u001b]8;;`,
+                    `\u0007`,
+                ].join(""),
+                default: metadata.game_modloader_version,
+                validate: async (value: string) => {
+                    return (await this.isVersionExists(
+                        metadata.game_modloader_type,
+                        metadata.game_version,
+                        value,
+                    ))
+                        ? true
+                        : "Version does not exist"
                 },
                 callback: (value: string) => {
                     metadata.game_modloader_version = value
@@ -147,99 +306,10 @@ class MinecraftJavaScreen extends GameScreen<
                     metadata.game_min_ram = parseInt(value)
                 },
             },
-            {
-                message:
-                    "Java Version (e.g. 8 for Minecraft 1.12.X, 16 for 1.17.X, 21 for 1.18.X onwards)",
-                default: metadata.game_java_version.toString(),
-                validate: (value: string) => {
-                    return /^[1-9]+$/.test(value)
-                        ? true
-                        : "Version cannot be empty or non-numeric"
-                },
-                callback: (value: string) => {
-                    metadata.game_java_version = parseInt(value)
-                },
-            },
-        ]
-        for (const form of updateForms) {
-            const answer = await input({
-                ...form,
-                default:
-                    typeof form.default === "function"
-                        ? await form.default()
-                        : form.default,
-            })
-            form.callback(answer)
+        ]) {
+            prompt.callback(await input(prompt))
         }
         return metadata
-    }
-
-    protected createScreen = async () => {
-        const metadata: Omit<MinecraftJavaPersistedSchema, "id" | "timestamp"> =
-            {
-                uuid: randomUUID().slice(0, 4),
-                name: "",
-                game_working_directory_path: "",
-                game_version: "",
-                game_modloader_type: "forge",
-                game_modloader_version: "",
-                game_max_ram: 6144,
-                game_min_ram: 6144,
-                game_java_version: 0,
-            }
-        const updatedMetadata = await this.updateMetadata(metadata)
-        await this.persistence.createInstance(updatedMetadata)
-    }
-
-    private retrieveVersion = async (
-        type: "forge" | "fabric",
-        minecraftVersion: string,
-    ) => {
-        const forgeHomepage = `https://files.minecraftforge.net/net/minecraftforge/forge/index_${minecraftVersion}.html`
-        const fabricHomepage = `https://meta.fabricmc.net/v2/versions/loader`
-
-        switch (type) {
-            case "forge":
-                const { data: forgeData } = await axios.get(forgeHomepage)
-                const content = cheerio.load(forgeData)
-                const forgeVersion = content("i.fa.promo-latest")
-                    .parent()
-                    .find("br + small")
-                    .text()
-                    .replace(/ /g, "")
-                    .split("-")[1]
-
-                if (!forgeVersion) {
-                    throw new Error(
-                        `Forge version not found for Minecraft ${minecraftVersion}`,
-                    )
-                }
-                return forgeVersion
-
-            case "fabric":
-                const { data: fabricData } = await axios.get(fabricHomepage)
-                const stableVersions = fabricData.filter(
-                    (version: any) => version.stable,
-                )
-                const fabricVersion = stableVersions.sort((a: any, b: any) => {
-                    const aParts = a.version.split(".").map(Number)
-                    const bParts = b.version.split(".").map(Number)
-                    for (
-                        let i = 0;
-                        i < Math.max(aParts.length, bParts.length);
-                        i++
-                    ) {
-                        if ((aParts[i] || 0) > (bParts[i] || 0)) return -1
-                        if ((aParts[i] || 0) < (bParts[i] || 0)) return 1
-                    }
-                    return 0
-                })[0].version
-
-                return fabricVersion
-
-            default:
-                throw new Error("Invalid modloader type")
-        }
     }
 
     private setupModloader = async (metadata: MinecraftJavaPersistedObject) => {
@@ -365,7 +435,9 @@ class MinecraftJavaScreen extends GameScreen<
         return false
     }
 
-    protected hostScreen = async (instance: MinecraftJavaPersistedObject) => {
+    protected performStartupInitialization = async (
+        instance: MinecraftJavaPersistedObject,
+    ) => {
         const {
             forgeLibraryPath,
             forgeLegacyJarPath,
@@ -381,8 +453,8 @@ class MinecraftJavaScreen extends GameScreen<
 
         await Core.createScreen({
             metadata: instance,
+            cwd: instance.gameWorkingDirectoryPath,
             screenArgs: [
-                `cd ${instance.gameWorkingDirectoryPath};`,
                 ...(instance.gameModloaderType === "forge" &&
                 fs.existsSync(forgeShimJarPath)
                     ? [
@@ -413,13 +485,6 @@ class MinecraftJavaScreen extends GameScreen<
                 `nogui`,
             ],
         })
-        const attachToScreen = await confirm({
-            message: "Do you want to attach the screen to the terminal",
-            default: true,
-        })
-        if (attachToScreen) {
-            await Core.attachScreen(instance)
-        }
     }
 }
 

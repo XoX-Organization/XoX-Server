@@ -1,5 +1,4 @@
-import { confirm, input } from "@inquirer/prompts"
-import { randomUUID } from "crypto"
+import { input } from "@inquirer/prompts"
 import fs from "fs"
 import * as Core from "."
 import GameScreen from "./game-screen"
@@ -14,11 +13,7 @@ interface TModLoaderPersistedSchema extends Core.PersistedSchema {
     game_seed?: string
 
     game_port: number
-    game_maxplayers: number
-    game_pass?: string
     game_motd?: string
-    game_secure?: boolean
-    game_noupnp?: boolean
 }
 
 class TModLoaderPersistedObject extends Core.PersistedObject<TModLoaderPersistedSchema> {
@@ -31,11 +26,7 @@ class TModLoaderPersistedObject extends Core.PersistedObject<TModLoaderPersisted
     gameSeed = this.raw.game_seed
 
     gamePort = this.raw.game_port
-    gameMaxPlayers = this.raw.game_maxplayers
-    gamePass = this.raw.game_pass
     gameMotd = this.raw.game_motd
-    gameSecure = this.raw.game_secure
-    gameNoUPnP = this.raw.game_noupnp
 }
 
 class TModLoaderScreen extends GameScreen<
@@ -43,7 +34,7 @@ class TModLoaderScreen extends GameScreen<
     TModLoaderPersistedObject
 > {
     public static steamAppId = "1281930"
-    public static steamAppPath =
+    public static executablePath =
         "~/.steam/SteamApps/common/tModLoader/start-tModLoaderServer.sh"
 
     protected persistence = new Core.Persistence<
@@ -51,10 +42,27 @@ class TModLoaderScreen extends GameScreen<
         TModLoaderPersistedObject
     >("game_tmodloader", TModLoaderPersistedObject)
 
-    protected updateMetadata = async (
-        metadata: Omit<TModLoaderPersistedSchema, "id" | "timestamp">,
+    protected metadataDefaultSchema: Omit<
+        TModLoaderPersistedSchema,
+        "id" | "timestamp" | "uuid"
+    > = {
+        name: "",
+        steam_app_beta_branch: undefined,
+        steam_username: undefined,
+
+        game_working_directory_path: "",
+
+        game_autocreate: 1,
+        game_seed: undefined,
+
+        game_port: 7777,
+        game_motd: undefined,
+    }
+
+    protected promptMetadataConfiguration = async (
+        metadata: Omit<TModLoaderPersistedSchema, "id" | "timestamp" | "uuid">,
     ) => {
-        const updateForms = [
+        for (const prompt of [
             {
                 message: "Name (e.g. Calamity-Modpack-3.4.5)",
                 default: metadata.name,
@@ -75,12 +83,12 @@ class TModLoaderScreen extends GameScreen<
                 callback: (value: string) =>
                     (metadata.steam_app_beta_branch = value || undefined),
             },
-            {
-                message: "Steam Username (Leave empty for default)",
-                default: metadata.steam_username,
-                callback: (value: string) =>
-                    (metadata.steam_username = value || undefined),
-            },
+            // {
+            //     message: "Steam Username (Leave empty for default)",
+            //     default: metadata.steam_username,
+            //     callback: (value: string) =>
+            //         (metadata.steam_username = value || undefined),
+            // },
             {
                 message: "Working Directory Path (e.g. /path/to/SaveData)",
                 default: metadata.game_working_directory_path,
@@ -97,25 +105,52 @@ class TModLoaderScreen extends GameScreen<
                     metadata.game_working_directory_path = value
                 },
             },
-            {
-                message: "Game World Size (1=small, 2=medium, 3=large)",
-                default: metadata.game_autocreate?.toString(),
-                validate: (value: string) => {
-                    return value === "1" || value === "2" || value === "3"
-                        ? true
-                        : "World size must be 1, 2 or 3"
+        ]) {
+            prompt.callback(await input(prompt))
+        }
+
+        const worldPath = `${metadata.game_working_directory_path}/Worlds/world.wld`
+
+        if (!fs.existsSync(worldPath)) {
+            console.log(
+                `! No existing world found at ${worldPath}, creating a new one`,
+            )
+            for (const prompt of [
+                {
+                    message:
+                        "Game World Size (1 = small, 2 = medium, 3 = large)",
+                    default: metadata.game_autocreate?.toString(),
+                    validate: (value: string) => {
+                        return value === "1" || value === "2" || value === "3"
+                            ? true
+                            : "World size must be 1, 2 or 3"
+                    },
+                    callback: (value: string) => {
+                        metadata.game_autocreate = parseInt(value) as 1 | 2 | 3
+                    },
                 },
-                callback: (value: string) => {
-                    metadata.game_autocreate = parseInt(value) as 1 | 2 | 3
+                {
+                    message: [
+                        `\u001b]8;;`,
+                        `https://terraria.fandom.com/wiki/Secret_world_seeds`,
+                        `\u0007`,
+                        `Game Seed (Leave empty for random)`,
+                        `\u001b]8;;`,
+                        `\u0007`,
+                    ].join(""),
+                    default: metadata.game_seed,
+                    callback: (value: string) => {
+                        metadata.game_seed = value || undefined
+                    },
                 },
-            },
-            {
-                message: "Game Seed (Leave empty for random)",
-                default: metadata.game_seed,
-                callback: (value: string) => {
-                    metadata.game_seed = value || undefined
-                },
-            },
+            ]) {
+                prompt.callback(await input(prompt))
+            }
+        } else {
+            console.log(`! Found existing world at ${worldPath}`)
+        }
+
+        for (const prompt of [
             {
                 message: "Game Port (e.g. 7777)",
                 default: metadata.game_port?.toString(),
@@ -127,48 +162,16 @@ class TModLoaderScreen extends GameScreen<
                 },
             },
             {
-                message: "Game Password (Leave empty for none)",
-                default: metadata.game_pass,
-                callback: (value: string) => {
-                    metadata.game_pass = value || undefined
-                },
-            },
-            {
                 message: "Game Message of the Day (Leave empty for none)",
                 default: metadata.game_motd,
                 callback: (value: string) => {
                     metadata.game_motd = value || undefined
                 },
             },
-        ]
-        for (const form of updateForms) {
-            const answer = await input(form)
-            form.callback(answer)
+        ]) {
+            prompt.callback(await input(prompt))
         }
         return metadata
-    }
-
-    protected createScreen = async () => {
-        const metadata: Omit<TModLoaderPersistedSchema, "id" | "timestamp"> = {
-            uuid: randomUUID().slice(0, 4),
-            name: "",
-            steam_app_beta_branch: undefined,
-            steam_username: undefined,
-
-            game_working_directory_path: "",
-
-            game_autocreate: 1,
-            game_seed: undefined,
-
-            game_port: 7777,
-            game_maxplayers: 16,
-            game_pass: undefined,
-            game_motd: undefined,
-            game_secure: true,
-            game_noupnp: true,
-        }
-        const updatedMetadata = await this.updateMetadata(metadata)
-        await this.persistence.createInstance(updatedMetadata)
     }
 
     private freezeEnabledMods = (instance: TModLoaderPersistedObject) => {
@@ -201,7 +204,9 @@ class TModLoaderScreen extends GameScreen<
         }
     }
 
-    protected hostScreen = async (instance: TModLoaderPersistedObject) => {
+    protected performStartupInitialization = async (
+        instance: TModLoaderPersistedObject,
+    ) => {
         await Core.steamUpdate({
             steamAppId: TModLoaderScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
@@ -212,7 +217,7 @@ class TModLoaderScreen extends GameScreen<
         await Core.createScreen({
             metadata: instance,
             screenArgs: [
-                TModLoaderScreen.steamAppPath,
+                TModLoaderScreen.executablePath,
                 `-nosteam`,
                 `-tmlsavedirectory "${instance.gameWorkingDirectoryPath}"`,
                 `-steamworkshopfolder none`,
@@ -221,20 +226,10 @@ class TModLoaderScreen extends GameScreen<
                 `-worldname "world"`,
                 instance.gameSeed ? `-seed "${instance.gameSeed}"` : "",
                 `-port ${instance.gamePort}`,
-                `-maxplayers ${instance.gameMaxPlayers}`,
-                instance.gamePass ? `-password "${instance.gamePass}"` : "",
+                `-maxplayers 16`,
                 instance.gameMotd ? `-motd "${instance.gameMotd}"` : "",
-                instance.gameSecure ? "-secure" : "",
-                instance.gameNoUPnP ? "-noupnp" : "",
             ],
         })
-        const attachToScreen = await confirm({
-            message: "Do you want to attach the screen to the terminal",
-            default: true,
-        })
-        if (attachToScreen) {
-            await Core.attachScreen(instance)
-        }
     }
 }
 
