@@ -2,6 +2,8 @@ import { input } from "@inquirer/prompts"
 import fs from "fs"
 import * as Core from "."
 import GameScreen from "./game-screen"
+import * as Screen from "./integrations/screen"
+import * as Steam from "./integrations/steam"
 
 interface TModLoaderPersistedSchema extends Core.PersistedSchema {
     steam_app_beta_branch?: string
@@ -34,7 +36,7 @@ class TModLoaderScreen extends GameScreen<
     TModLoaderPersistedObject
 > {
     public static steamAppId = "1281930"
-    public static executablePath = `${Core.steamHomePath()}/tModLoader/start-tModLoaderServer.sh`
+    public static executablePath = `${Steam.steamHomePath()}/tModLoader/start-tModLoaderServer.sh`
 
     protected persistence = new Core.Persistence<
         TModLoaderPersistedSchema,
@@ -206,14 +208,14 @@ class TModLoaderScreen extends GameScreen<
     protected performStartupInitialization = async (
         instance: TModLoaderPersistedObject,
     ) => {
-        await Core.steamUpdate({
+        await Steam.steamUpdate({
             steamAppId: TModLoaderScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: false,
             steamUsername: instance.steamUsername,
         })
         this.freezeEnabledMods(instance)
-        await Core.createScreen({
+        await Screen.createScreen({
             metadata: instance,
             screenArgs: [
                 TModLoaderScreen.executablePath,

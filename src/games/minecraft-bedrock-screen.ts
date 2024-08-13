@@ -4,7 +4,9 @@ import * as cheerio from "cheerio"
 import fs from "fs"
 import { $ } from "zx/core"
 import * as Core from "."
+import * as Utilities from "../utilities"
 import GameScreen from "./game-screen"
+import * as Screen from "./integrations/screen"
 
 interface MinecraftBedrockPersistedSchema extends Core.PersistedSchema {
     game_working_directory_path: string
@@ -158,7 +160,7 @@ class MinecraftBedrockScreen extends GameScreen<
             console.log(
                 "! Downloading Minecraft Bedrock Dedicated Server installer",
             )
-            await Core.download(installerUrl, installerPath)
+            await Utilities.download(installerUrl, installerPath)
         }
 
         console.log("! Extracting Minecraft Bedrock Dedicated Server installer")
@@ -169,7 +171,7 @@ class MinecraftBedrockScreen extends GameScreen<
         instance: MinecraftBedrockPersistedObject,
     ) => {
         await this.setupInstaller(instance)
-        await Core.createScreen({
+        await Screen.createScreen({
             metadata: instance,
             cwd: instance.gameWorkingDirectoryPath,
             screenArgs: [`LD_LIBRARY_PATH=. ./bedrock_server`],

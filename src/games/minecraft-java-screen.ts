@@ -4,7 +4,9 @@ import * as cheerio from "cheerio"
 import fs from "fs"
 import { $ } from "zx/core"
 import * as Core from "."
+import * as Utilities from "../utilities"
 import GameScreen from "./game-screen"
+import * as Screen from "./integrations/screen"
 
 interface MinecraftJavaPersistedSchema extends Core.PersistedSchema {
     game_working_directory_path: string
@@ -351,13 +353,16 @@ class MinecraftJavaScreen extends GameScreen<
             }
             if (!fs.existsSync(forgeInstallerJarPath)) {
                 console.log("! Downloading Forge Installer Jar")
-                await Core.download(forgeInstallerJarUrl, forgeInstallerJarPath)
+                await Utilities.download(
+                    forgeInstallerJarUrl,
+                    forgeInstallerJarPath,
+                )
             }
             console.log("! Installing Forge Library")
             await $({
                 cwd: metadata.gameWorkingDirectoryPath,
             })`java -jar ${forgeInstallerJarPath} --installServer`.pipe(
-                new Core.CarriageReturnWritableStream(),
+                new Utilities.CarriageReturnWritableStream(),
             )
             fs.rmSync(forgeInstallerJarPath)
         }
@@ -377,7 +382,10 @@ class MinecraftJavaScreen extends GameScreen<
                 )
             }
             console.log("! Downloading Fabric Installer Jar")
-            await Core.download(fabricInstallerJarUrl, fabricInstallerJarPath)
+            await Utilities.download(
+                fabricInstallerJarUrl,
+                fabricInstallerJarPath,
+            )
         }
 
         return {
@@ -451,7 +459,7 @@ class MinecraftJavaScreen extends GameScreen<
 
         const java = this.setupJava(instance)
 
-        await Core.createScreen({
+        await Screen.createScreen({
             metadata: instance,
             cwd: instance.gameWorkingDirectoryPath,
             screenArgs: [

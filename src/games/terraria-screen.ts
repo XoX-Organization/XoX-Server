@@ -4,6 +4,8 @@ import os from "os"
 import { $ } from "zx/core"
 import * as Core from "."
 import GameScreen from "./game-screen"
+import * as Screen from "./integrations/screen"
+import * as Steam from "./integrations/steam"
 
 interface TerrariaPersistedSchema extends Core.PersistedSchema {
     steam_app_beta_branch?: string
@@ -32,7 +34,7 @@ class TerrariaScreen extends GameScreen<
     TerrariaPersistedObject
 > {
     public static steamAppId = "105600"
-    public static executablePath = `${Core.steamHomePath()}/Terraria/TerrariaServer.bin.x86_64`
+    public static executablePath = `${Steam.steamHomePath()}/Terraria/TerrariaServer.bin.x86_64`
     public static savedWorldsPath = `${os.homedir()}/.local/share/Terraria/Worlds`
 
     protected persistence = new Core.Persistence<
@@ -157,14 +159,14 @@ class TerrariaScreen extends GameScreen<
     protected performStartupInitialization = async (
         instance: TerrariaPersistedObject,
     ) => {
-        await Core.steamUpdate({
+        await Steam.steamUpdate({
             steamAppId: TerrariaScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: false,
             steamUsername: instance.steamUsername,
         })
         $`chmod +x ${TerrariaScreen.executablePath}`
-        await Core.createScreen({
+        await Screen.createScreen({
             metadata: instance,
             screenArgs: [
                 TerrariaScreen.executablePath,

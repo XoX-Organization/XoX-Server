@@ -3,6 +3,8 @@ import fs from "fs"
 import path from "path"
 import * as Core from "."
 import GameScreen from "./game-screen"
+import * as Screen from "./integrations/screen"
+import * as Steam from "./integrations/steam"
 
 interface TheForestPersistedSchema extends Core.PersistedSchema {
     steam_app_beta_branch?: string
@@ -44,7 +46,7 @@ class TheForestScreen extends GameScreen<
     TheForestPersistedObject
 > {
     public static steamAppId = "556450"
-    public static executableParentDir = `${Core.steamHomePath()}/TheForestDedicatedServer`
+    public static executableParentDir = `${Steam.steamHomePath()}/TheForestDedicatedServer`
     public static executablePath = `${this.executableParentDir}/TheForestDedicatedServer.exe`
 
     protected persistence = new Core.Persistence<
@@ -254,7 +256,7 @@ class TheForestScreen extends GameScreen<
         instance: TheForestPersistedObject,
     ) => {
         await Core.verifyRequiredPackages(["wine", "xvfb-run"])
-        await Core.steamUpdate({
+        await Steam.steamUpdate({
             steamAppId: TheForestScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: true,
@@ -262,7 +264,7 @@ class TheForestScreen extends GameScreen<
             targetPlatform: "windows",
         })
         const configPath = this.generateConfigs(instance)
-        await Core.createScreen({
+        await Screen.createScreen({
             metadata: instance,
             cwd: TheForestScreen.executableParentDir,
             screenArgs: [
