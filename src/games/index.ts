@@ -23,11 +23,13 @@ export const steamUpdate = async ({
     steamUsername,
     steamAppBetaBranch,
     steamLoginAnonymous = true,
+    targetPlatform,
 }: {
     steamAppId: string
     steamUsername?: string
     steamAppBetaBranch?: string
     steamLoginAnonymous?: boolean
+    targetPlatform?: string
 }) => {
     if (!fs.existsSync(steamPath)) {
         throw new Error(
@@ -48,7 +50,7 @@ export const steamUpdate = async ({
     const command = [
         steamPath,
         `+@sSteamCmdForcePlatformType "${
-            platform === "win32" ? "windows" : "linux"
+            targetPlatform ?? platform === "win32" ? "windows" : "linux"
         }"`,
         `+login ${chosenSteamUsername}`,
         `+app_update ${steamAppId}`,
