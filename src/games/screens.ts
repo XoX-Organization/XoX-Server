@@ -1,6 +1,7 @@
 import minecraftBedrockScreen from "./minecraft-bedrock-screen"
 import minecraftJavaScreen from "./minecraft-java-screen"
 import terrariaScreen from "./terraria-screen"
+import theforestScreen from "./theforest-screen"
 import tmodloaderScreen from "./tmodloader-screen"
 
 export default [
@@ -19,5 +20,9 @@ export default [
     {
         name: "Minecraft (Bedrock Edition)",
         value: minecraftBedrockScreen,
+    },
+    {
+        name: "The Forest",
+        value: theforestScreen,
     },
 ]

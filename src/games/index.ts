@@ -16,6 +16,15 @@ export const platform = os.platform()
 
 export const steamPath = process.env.STEAM_PATH || "/usr/games/steamcmd"
 
+const _steamHomePath = [
+    `${os.homedir()}/.steam/SteamApps/common`,
+    `${os.homedir()}/Steam/steamapps/common`,
+]
+
+export const steamHomePath = () => {
+    return _steamHomePath.find((path) => fs.existsSync(path)) || ""
+}
+
 export const steamGlobalUsername = process.env.STEAM_USERNAME
 
 export const steamUpdate = async ({
@@ -23,11 +32,13 @@ export const steamUpdate = async ({
     steamUsername,
     steamAppBetaBranch,
     steamLoginAnonymous = true,
+    targetPlatform,
 }: {
     steamAppId: string
     steamUsername?: string
     steamAppBetaBranch?: string
     steamLoginAnonymous?: boolean
+    targetPlatform?: string
 }) => {
     if (!fs.existsSync(steamPath)) {
         throw new Error(
@@ -48,7 +59,7 @@ export const steamUpdate = async ({
     const command = [
         steamPath,
         `+@sSteamCmdForcePlatformType "${
-            platform === "win32" ? "windows" : "linux"
+            targetPlatform ?? platform === "win32" ? "windows" : "linux"
         }"`,
         `+login ${chosenSteamUsername}`,
         `+app_update ${steamAppId}`,
@@ -270,6 +281,16 @@ export const download = async (url: string, outputPath: string) => {
         data.on("error", (err: any) => reject(err))
         data.pipe(fs.createWriteStream(outputPath))
     })
+}
+
+export const verifyRequiredPackages = async (packages: string[]) => {
+    await Promise.all(
+        packages.map((name) =>
+            $`command -v ${name}`.catch(() => {
+                throw new Error(`Package ${name} not found`)
+            }),
+        ),
+    )
 }
 
 export class CarriageReturnWritableStream extends Writable {

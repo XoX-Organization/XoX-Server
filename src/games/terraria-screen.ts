@@ -32,7 +32,7 @@ class TerrariaScreen extends GameScreen<
     TerrariaPersistedObject
 > {
     public static steamAppId = "105600"
-    public static executablePath = `${os.homedir()}/.steam/SteamApps/common/Terraria/TerrariaServer.bin.x86_64`
+    public static executablePath = `${Core.steamHomePath()}/Terraria/TerrariaServer.bin.x86_64`
     public static savedWorldsPath = `${os.homedir()}/.local/share/Terraria/Worlds`
 
     protected persistence = new Core.Persistence<
