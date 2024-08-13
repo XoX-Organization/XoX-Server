@@ -34,8 +34,7 @@ class TModLoaderScreen extends GameScreen<
     TModLoaderPersistedObject
 > {
     public static steamAppId = "1281930"
-    public static executablePath =
-        "~/.steam/SteamApps/common/tModLoader/start-tModLoaderServer.sh"
+    public static executablePath = `${Core.steamHomePath()}/tModLoader/start-tModLoaderServer.sh`
 
     protected persistence = new Core.Persistence<
         TModLoaderPersistedSchema,

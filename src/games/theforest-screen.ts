@@ -1,11 +1,8 @@
 import { confirm, input } from "@inquirer/prompts"
-import { randomUUID } from "crypto"
 import fs from "fs"
+import path from "path"
 import * as Core from "."
 import GameScreen from "./game-screen"
-import { formToJSON } from "axios"
-import os from "os"
-import path from "path"
 
 interface TheForestPersistedSchema extends Core.PersistedSchema {
     steam_app_beta_branch?: string
@@ -47,7 +44,8 @@ class TheForestScreen extends GameScreen<
     TheForestPersistedObject
 > {
     public static steamAppId = "556450"
-    public static steamAppPath = `${os.homedir()}/.steam/SteamApps/common/TheForestDedicatedServer/TheForestDedicatedServer.exe`
+    public static executableParentDir = `${Core.steamHomePath()}/TheForestDedicatedServer`
+    public static executablePath = `${this.executableParentDir}/TheForestDedicatedServer.exe`
 
     protected persistence = new Core.Persistence<
         TheForestPersistedSchema,
@@ -223,7 +221,7 @@ class TheForestScreen extends GameScreen<
             `serverPasswordAdmin`,
             `serverSteamAccount`,
             `enableVAC off`,
-            `serverAutoSaveInterval 1`,
+            `serverAutoSaveInterval 15`,
             `difficulty ${instance.gameDifficulty}`,
             `initType Continue`,
             `slot 1`,
@@ -243,7 +241,7 @@ class TheForestScreen extends GameScreen<
             `realisticPlayerDamage ${
                 instance.gameRealisticPlayerDamage ? "on" : "off"
             }`,
-            `saveFolderPath`,
+            `saveFolderPath '${instance.gameWorkingDirectoryPath}'`,
             `targetFpsIdle 5`,
             `targetFpsActive 60`,
         ]
@@ -255,32 +253,26 @@ class TheForestScreen extends GameScreen<
     protected performStartupInitialization = async (
         instance: TheForestPersistedObject,
     ) => {
-        // await Core.steamUpdate({
-        //     steamAppId: TheForestScreen.steamAppId,
-        //     steamAppBetaBranch: instance.steamAppBetaBranch,
-        //     steamLoginAnonymous: true,
-        //     steamUsername: instance.steamUsername,
-        //     targetPlatform: "windows",
-        // })
+        await Core.verifyRequiredPackages(["wine", "xvfb-run"])
+        await Core.steamUpdate({
+            steamAppId: TheForestScreen.steamAppId,
+            steamAppBetaBranch: instance.steamAppBetaBranch,
+            steamLoginAnonymous: true,
+            steamUsername: instance.steamUsername,
+            targetPlatform: "windows",
+        })
         const configPath = this.generateConfigs(instance)
         await Core.createScreen({
             metadata: instance,
-            cwd: TheForestScreen.steamAppPath.split("/").slice(0, -1).join("/"),
+            cwd: TheForestScreen.executableParentDir,
             screenArgs: [
                 `xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32'`,
-                `wine ${TheForestScreen.steamAppPath}`,
-                `-configfilepath ${configPath}`,
-                `-savefolderpath ${instance.gameWorkingDirectoryPath}`,
+                `wine ${TheForestScreen.executablePath}`,
                 `-batchmode`,
                 `-nographics`,
+                `-configfilepath '${configPath}'`,
             ],
         })
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        if (!(await Core.existsScreen(instance))) {
-            throw new Error(
-                "Missing `xvfb` or `wine` package. Please install it with `sudo apt install xvfb wine`",
-            )
-        }
     }
 }
 
