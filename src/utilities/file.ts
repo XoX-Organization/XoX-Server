@@ -21,9 +21,7 @@ export const download = async (url: string, outputPath: string) => {
     })
 
     return new Promise<void>((resolve, reject) => {
-        data.on("data", (chunk: any) =>
-            totalLength ? progressBar.tick(chunk.length) : null,
-        )
+        data.on("data", (chunk: any) => (totalLength ? progressBar.tick(chunk.length) : null))
         data.on("end", () => resolve())
         data.on("error", (err: any) => reject(err))
         data.pipe(fs.createWriteStream(outputPath))

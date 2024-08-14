@@ -1,12 +1,10 @@
 import { confirm, select, Separator } from "@inquirer/prompts"
-import * as Core from "."
 import { PersistedObject, PersistedSchema, Persistence } from "."
 import Screen from "../common/screen"
+import * as IntegratedScreen from "./integrations/screen"
 
-abstract class GameScreen<
-    T extends PersistedSchema,
-    U extends PersistedObject<T>,
-> implements Screen
+abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T>>
+    implements Screen
 {
     /**
      * The persistence object for the game
@@ -16,10 +14,7 @@ abstract class GameScreen<
     /**
      * The default schema for the metadata
      */
-    protected abstract metadataDefaultSchema: Omit<
-        T,
-        "id" | "timestamp" | "uuid"
-    >
+    protected abstract metadataDefaultSchema: Omit<T, "id" | "timestamp" | "uuid">
 
     /**
      * The function to prompt the user for the metadata configuration
@@ -93,9 +88,7 @@ abstract class GameScreen<
     /**
      * The function to perform the startup initialization for the game
      */
-    protected abstract performStartupInitialization: (
-        instance: U,
-    ) => Promise<void>
+    protected abstract performStartupInitialization: (instance: U) => Promise<void>
 
     public show = async () => {
         while (true) {
@@ -103,36 +96,36 @@ abstract class GameScreen<
             const selectInstance = await select({
                 loop: false,
                 message:
-                    availableInstances.length > 0
-                        ? "Which instance would you like to play with"
-                        : "No instance found, what would you like to do",
+                    availableInstances.length > 0 ?
+                        "Which instance would you like to play with"
+                    :   "No instance found, what would you like to do",
                 choices: [
-                    ...(availableInstances.length > 0
-                        ? [
-                              new Separator(),
-                              ...availableInstances.map((instance, index) => ({
-                                  name: `(${instance.uuid}) ${instance.name}`,
-                                  value: index,
-                              })),
-                              new Separator(),
-                          ]
-                        : []),
+                    ...(availableInstances.length > 0 ?
+                        [
+                            new Separator(),
+                            ...availableInstances.map((instance, index) => ({
+                                name: `(${instance.uuid}) ${instance.name}`,
+                                value: index,
+                            })),
+                            new Separator(),
+                        ]
+                    :   []),
                     {
                         name: "Create New Instance",
                         value: -1,
                     },
-                    ...(availableInstances.length > 0
-                        ? [
-                              {
-                                  name: "Update Existing Instance",
-                                  value: -2,
-                              },
-                              {
-                                  name: "Delete Instance",
-                                  value: -3,
-                              },
-                          ]
-                        : []),
+                    ...(availableInstances.length > 0 ?
+                        [
+                            {
+                                name: "Update Existing Instance",
+                                value: -2,
+                            },
+                            {
+                                name: "Delete Instance",
+                                value: -3,
+                            },
+                        ]
+                    :   []),
                     {
                         name: "Cancel",
                         value: undefined,
@@ -153,23 +146,14 @@ abstract class GameScreen<
                     await this.promptDeleteScreen(availableInstances)
                     break
                 default:
-                    await this.performStartupInitialization(
-                        availableInstances[selectInstance],
-                    )
-                    if (
-                        await Core.existsScreen(
-                            availableInstances[selectInstance],
-                        )
-                    ) {
+                    await this.performStartupInitialization(availableInstances[selectInstance])
+                    if (await IntegratedScreen.existsScreen(availableInstances[selectInstance])) {
                         const attachToScreen = await confirm({
-                            message:
-                                "Do you want to attach the screen to the terminal",
+                            message: "Do you want to attach the screen to the terminal",
                             default: true,
                         })
                         if (attachToScreen) {
-                            await Core.attachScreen(
-                                availableInstances[selectInstance],
-                            )
+                            await IntegratedScreen.attachScreen(availableInstances[selectInstance])
                         }
                     }
                     break

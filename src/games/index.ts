@@ -12,19 +12,16 @@ export interface PersistedSchema {
     name: string
 }
 
-export class Persistence<
-    T extends PersistedSchema,
-    U extends PersistedObject<T>,
-> {
+export class Persistence<T extends PersistedSchema, U extends PersistedObject<T>> {
     protected persistedConstructor: new (data: any) => U
     protected db: sqlite3.Database
     protected table: string
 
     constructor(table: string, persistedConstructor: new (data: any) => U) {
         this.db = new sqlite3.Database(
-            process.env.NODE_ENV === "development"
-                ? "./dist/appdata.sqlite3"
-                : `${process.env.HOME}/.xox-server/appdata.sqlite3`,
+            process.env.NODE_ENV === "development" ?
+                "./dist/appdata.sqlite3"
+            :   `${process.env.HOME}/.xox-server/appdata.sqlite3`,
         )
 
         this.persistedConstructor = persistedConstructor
@@ -38,16 +35,12 @@ export class Persistence<
                 if (err) {
                     return reject(err)
                 }
-                resolve(
-                    rows.map((row: any) => new this.persistedConstructor(row)),
-                )
+                resolve(rows.map((row: any) => new this.persistedConstructor(row)))
             })
         })
     }
 
-    createInstance = async (
-        metadata: Omit<T, "id" | "timestamp" | "uuid">,
-    ): Promise<void> => {
+    createInstance = async (metadata: Omit<T, "id" | "timestamp" | "uuid">): Promise<void> => {
         return new Promise((resolve, reject) => {
             const data = { ...metadata, uuid: randomUUID().slice(0, 4) }
             const columns = Object.keys(data).join(", ")

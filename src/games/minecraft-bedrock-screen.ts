@@ -50,8 +50,7 @@ class MinecraftBedrockScreen extends GameScreen<
     }
 
     private retrieveVersion = async () => {
-        const officialWebsiteUrl =
-            "https://www.minecraft.net/en-us/download/server/bedrock"
+        const officialWebsiteUrl = "https://www.minecraft.net/en-us/download/server/bedrock"
 
         const officialWebsite = await axios.get(officialWebsiteUrl, {
             headers: {
@@ -60,9 +59,9 @@ class MinecraftBedrockScreen extends GameScreen<
             },
         })
         const installerUrl = cheerio
-            .load(officialWebsite.data)(
-                'a[aria-label="Download Minecraft Dedicated Server software for Ubuntu (Linux)"]',
-            )
+            .load(
+                officialWebsite.data,
+            )('a[aria-label="Download Minecraft Dedicated Server software for Ubuntu (Linux)"]')
             .attr("href")
 
         if (!installerUrl) {
@@ -73,10 +72,7 @@ class MinecraftBedrockScreen extends GameScreen<
     }
 
     protected promptMetadataConfiguration = async (
-        metadata: Omit<
-            MinecraftBedrockPersistedSchema,
-            "id" | "timestamp" | "uuid"
-        >,
+        metadata: Omit<MinecraftBedrockPersistedSchema, "id" | "timestamp" | "uuid">,
     ) => {
         for (const prompt of [
             {
@@ -93,17 +89,18 @@ class MinecraftBedrockScreen extends GameScreen<
                 },
             },
             {
-                message:
-                    "Working Directory Path (e.g. /path/to/Minecraft-1.16.5)",
+                message: "Working Directory Path (e.g. /path/to/Minecraft-1.16.5)",
                 default: metadata.game_working_directory_path,
                 validate: (value: string) => {
-                    return value.trim().length > 0
-                        ? fs.existsSync(value)
-                            ? fs.statSync(value).isDirectory()
-                                ? true
-                                : "Path is not a directory"
-                            : "Path does not exist"
-                        : "Path cannot be empty"
+                    return (
+                        value.trim().length > 0 ?
+                            fs.existsSync(value) ?
+                                fs.statSync(value).isDirectory() ?
+                                    true
+                                :   "Path is not a directory"
+                            :   "Path does not exist"
+                        :   "Path cannot be empty"
+                    )
                 },
                 callback: (value: string) => {
                     metadata.game_working_directory_path = value
@@ -118,13 +115,9 @@ class MinecraftBedrockScreen extends GameScreen<
                     `\u001b]8;;`,
                     `\u0007`,
                 ].join(""),
-                default:
-                    metadata.game_server_version ||
-                    (() => this.retrieveVersion()),
+                default: metadata.game_server_version || (() => this.retrieveVersion()),
                 validate: async (value: string) => {
-                    return (await this.isVersionExists(value))
-                        ? true
-                        : "Version does not exist"
+                    return (await this.isVersionExists(value)) ? true : "Version does not exist"
                 },
                 callback: (value: string) => {
                     metadata.game_server_version = value.trim()
@@ -135,21 +128,17 @@ class MinecraftBedrockScreen extends GameScreen<
                 await input({
                     ...prompt,
                     default:
-                        typeof prompt.default === "function"
-                            ? await prompt.default()
-                            : prompt.default,
+                        typeof prompt.default === "function" ?
+                            await prompt.default()
+                        :   prompt.default,
                 }),
             )
         }
         return metadata
     }
 
-    private setupInstaller = async (
-        metadata: MinecraftBedrockPersistedObject,
-    ) => {
-        if (
-            fs.existsSync(`${metadata.gameWorkingDirectoryPath}/bedrock_server`)
-        ) {
+    private setupInstaller = async (metadata: MinecraftBedrockPersistedObject) => {
+        if (fs.existsSync(`${metadata.gameWorkingDirectoryPath}/bedrock_server`)) {
             return
         }
 
@@ -157,9 +146,7 @@ class MinecraftBedrockScreen extends GameScreen<
         const installerPath = `${metadata.gameWorkingDirectoryPath}/bedrock-server-${metadata.gameServerVersion}.zip`
 
         if (!fs.existsSync(installerPath)) {
-            console.log(
-                "! Downloading Minecraft Bedrock Dedicated Server installer",
-            )
+            console.log("! Downloading Minecraft Bedrock Dedicated Server installer")
             await Utilities.download(installerUrl, installerPath)
         }
 
@@ -167,9 +154,7 @@ class MinecraftBedrockScreen extends GameScreen<
         await $`unzip -o ${installerPath} -d ${metadata.gameWorkingDirectoryPath}`
     }
 
-    protected performStartupInitialization = async (
-        instance: MinecraftBedrockPersistedObject,
-    ) => {
+    protected performStartupInitialization = async (instance: MinecraftBedrockPersistedObject) => {
         await this.setupInstaller(instance)
         await Screen.createScreen({
             metadata: instance,

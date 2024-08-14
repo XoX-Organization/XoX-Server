@@ -35,12 +35,12 @@ export const steamUpdate = async ({
         )
     }
     const chosenSteamUsername =
-        steamUsername ||
-        steamGlobalUsername ||
-        (steamLoginAnonymous ? "anonymous" : "")
+        steamUsername || steamGlobalUsername || (steamLoginAnonymous ? "anonymous" : "")
 
     if (!chosenSteamUsername) {
-        throw new Error("Steam username not provided")
+        throw new Error(
+            "Steam username not provided, export the Steam username with `export STEAM_USERNAME=<username>` instead",
+        )
     }
 
     const maxRetries = 5
@@ -48,7 +48,7 @@ export const steamUpdate = async ({
     const command = [
         steamPath,
         `+@sSteamCmdForcePlatformType "${
-            targetPlatform ?? os.platform() === "win32" ? "windows" : "linux"
+            (targetPlatform ?? os.platform() === "win32") ? "windows" : "linux"
         }"`,
         `+login ${chosenSteamUsername}`,
         `+app_update ${steamAppId}`,

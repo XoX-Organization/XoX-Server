@@ -31,10 +31,7 @@ class TModLoaderPersistedObject extends Core.PersistedObject<TModLoaderPersisted
     gameMotd = this.raw.game_motd
 }
 
-class TModLoaderScreen extends GameScreen<
-    TModLoaderPersistedSchema,
-    TModLoaderPersistedObject
-> {
+class TModLoaderScreen extends GameScreen<TModLoaderPersistedSchema, TModLoaderPersistedObject> {
     public static steamAppId = "1281930"
     public static executablePath = `${Steam.steamHomePath()}/tModLoader/start-tModLoaderServer.sh`
 
@@ -43,22 +40,20 @@ class TModLoaderScreen extends GameScreen<
         TModLoaderPersistedObject
     >("game_tmodloader", TModLoaderPersistedObject)
 
-    protected metadataDefaultSchema: Omit<
-        TModLoaderPersistedSchema,
-        "id" | "timestamp" | "uuid"
-    > = {
-        name: "",
-        steam_app_beta_branch: undefined,
-        steam_username: undefined,
+    protected metadataDefaultSchema: Omit<TModLoaderPersistedSchema, "id" | "timestamp" | "uuid"> =
+        {
+            name: "",
+            steam_app_beta_branch: undefined,
+            steam_username: undefined,
 
-        game_working_directory_path: "",
+            game_working_directory_path: "",
 
-        game_autocreate: 1,
-        game_seed: undefined,
+            game_autocreate: 1,
+            game_seed: undefined,
 
-        game_port: 7777,
-        game_motd: undefined,
-    }
+            game_port: 7777,
+            game_motd: undefined,
+        }
 
     protected promptMetadataConfiguration = async (
         metadata: Omit<TModLoaderPersistedSchema, "id" | "timestamp" | "uuid">,
@@ -78,11 +73,9 @@ class TModLoaderScreen extends GameScreen<
                 },
             },
             {
-                message:
-                    "Steam App Beta Branch (Leave empty for none, e.g. '1.4.3-legacy')",
+                message: "Steam App Beta Branch (Leave empty for none, e.g. '1.4.3-legacy')",
                 default: metadata.steam_app_beta_branch,
-                callback: (value: string) =>
-                    (metadata.steam_app_beta_branch = value || undefined),
+                callback: (value: string) => (metadata.steam_app_beta_branch = value || undefined),
             },
             // {
             //     message: "Steam Username (Leave empty for default)",
@@ -94,13 +87,15 @@ class TModLoaderScreen extends GameScreen<
                 message: "Working Directory Path (e.g. /path/to/SaveData)",
                 default: metadata.game_working_directory_path,
                 validate: (value: string) => {
-                    return value.trim().length > 0
-                        ? fs.existsSync(value)
-                            ? fs.statSync(value).isDirectory()
-                                ? true
-                                : "Path is not a directory"
-                            : "Path does not exist"
-                        : "Path cannot be empty"
+                    return (
+                        value.trim().length > 0 ?
+                            fs.existsSync(value) ?
+                                fs.statSync(value).isDirectory() ?
+                                    true
+                                :   "Path is not a directory"
+                            :   "Path does not exist"
+                        :   "Path cannot be empty"
+                    )
                 },
                 callback: (value: string) => {
                     metadata.game_working_directory_path = value
@@ -113,18 +108,15 @@ class TModLoaderScreen extends GameScreen<
         const worldPath = `${metadata.game_working_directory_path}/Worlds/world.wld`
 
         if (!fs.existsSync(worldPath)) {
-            console.log(
-                `! No existing world found at ${worldPath}, creating a new one`,
-            )
+            console.log(`! No existing world found at ${worldPath}, creating a new one`)
             for (const prompt of [
                 {
-                    message:
-                        "Game World Size (1 = small, 2 = medium, 3 = large)",
+                    message: "Game World Size (1 = small, 2 = medium, 3 = large)",
                     default: metadata.game_autocreate?.toString(),
                     validate: (value: string) => {
-                        return value === "1" || value === "2" || value === "3"
-                            ? true
-                            : "World size must be 1, 2 or 3"
+                        return value === "1" || value === "2" || value === "3" ?
+                                true
+                            :   "World size must be 1, 2 or 3"
                     },
                     callback: (value: string) => {
                         metadata.game_autocreate = parseInt(value) as 1 | 2 | 3
@@ -183,11 +175,7 @@ class TModLoaderScreen extends GameScreen<
             return
         }
         try {
-            if (
-                !fs.existsSync(
-                    `${instance.gameWorkingDirectoryPath}/Mods/enabled.json.constant`,
-                )
-            ) {
+            if (!fs.existsSync(`${instance.gameWorkingDirectoryPath}/Mods/enabled.json.constant`)) {
                 fs.copyFileSync(
                     `${instance.gameWorkingDirectoryPath}/Mods/enabled.json`,
                     `${instance.gameWorkingDirectoryPath}/Mods/enabled.json.constant`,
@@ -205,9 +193,7 @@ class TModLoaderScreen extends GameScreen<
         }
     }
 
-    protected performStartupInitialization = async (
-        instance: TModLoaderPersistedObject,
-    ) => {
+    protected performStartupInitialization = async (instance: TModLoaderPersistedObject) => {
         await Steam.steamUpdate({
             steamAppId: TModLoaderScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,

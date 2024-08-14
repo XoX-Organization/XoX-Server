@@ -20,9 +20,7 @@ export const createScreen = async <T extends PersistedObject>({
     cwd?: string
 }) => {
     if (await existsScreen(metadata)) {
-        throw new Error(
-            `Screen ${nameScreen(metadata)} already exists, aborting`,
-        )
+        throw new Error(`Screen ${nameScreen(metadata)} already exists, aborting`)
     }
 
     const command = [
@@ -38,11 +36,7 @@ export const createScreen = async <T extends PersistedObject>({
     ].join(" ")
 
     if (process.env.NODE_ENV === "development") {
-        console.debug(
-            `& Creating screen ${nameScreen(
-                metadata,
-            )} with command:\n\n${command}\n\n`,
-        )
+        console.debug(`& Creating screen ${nameScreen(metadata)} with command:\n\n${command}\n\n`)
     }
     await $`${command}`
 }

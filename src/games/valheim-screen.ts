@@ -16,25 +16,19 @@ class ValheimPersistedObject extends Core.PersistedObject<ValheimPersistedSchema
     steamUsername = this.raw.steam_username
 }
 
-class ValheimScreen extends GameScreen<
-    ValheimPersistedSchema,
-    ValheimPersistedObject
-> {
+class ValheimScreen extends GameScreen<ValheimPersistedSchema, ValheimPersistedObject> {
     public static steamAppId = "896660"
     public static executableParentDir = `${Steam.steamHomePath()}/Valheim dedicated server`
     public static executablePath = `${ValheimScreen.executableParentDir}/valheim_server.x86_64`
 
     public static savedWorldsPath = `${os.homedir()}/.config/unity3d/IronGate/Valheim/worlds_local`
 
-    protected persistence = new Core.Persistence<
-        ValheimPersistedSchema,
-        ValheimPersistedObject
-    >("game_valheim", ValheimPersistedObject)
+    protected persistence = new Core.Persistence<ValheimPersistedSchema, ValheimPersistedObject>(
+        "game_valheim",
+        ValheimPersistedObject,
+    )
 
-    protected metadataDefaultSchema: Omit<
-        ValheimPersistedSchema,
-        "id" | "timestamp" | "uuid"
-    > = {
+    protected metadataDefaultSchema: Omit<ValheimPersistedSchema, "id" | "timestamp" | "uuid"> = {
         name: "",
         steam_app_beta_branch: undefined,
         steam_username: undefined,
@@ -68,8 +62,7 @@ class ValheimScreen extends GameScreen<
             {
                 message: "Steam App Beta Branch (Leave empty for none)",
                 default: metadata.steam_app_beta_branch,
-                callback: (value: string) =>
-                    (metadata.steam_app_beta_branch = value || undefined),
+                callback: (value: string) => (metadata.steam_app_beta_branch = value || undefined),
             },
             // {
             //     message: "Steam Username (Leave empty for default)",
@@ -83,9 +76,7 @@ class ValheimScreen extends GameScreen<
         return metadata
     }
 
-    protected performStartupInitialization = async (
-        instance: ValheimPersistedObject,
-    ) => {
+    protected performStartupInitialization = async (instance: ValheimPersistedObject) => {
         await Steam.steamUpdate({
             steamAppId: ValheimScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,

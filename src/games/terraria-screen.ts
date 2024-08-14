@@ -29,23 +29,17 @@ class TerrariaPersistedObject extends Core.PersistedObject<TerrariaPersistedSche
     gameMotd = this.raw.game_motd
 }
 
-class TerrariaScreen extends GameScreen<
-    TerrariaPersistedSchema,
-    TerrariaPersistedObject
-> {
+class TerrariaScreen extends GameScreen<TerrariaPersistedSchema, TerrariaPersistedObject> {
     public static steamAppId = "105600"
     public static executablePath = `${Steam.steamHomePath()}/Terraria/TerrariaServer.bin.x86_64`
     public static savedWorldsPath = `${os.homedir()}/.local/share/Terraria/Worlds`
 
-    protected persistence = new Core.Persistence<
-        TerrariaPersistedSchema,
-        TerrariaPersistedObject
-    >("game_terraria", TerrariaPersistedObject)
+    protected persistence = new Core.Persistence<TerrariaPersistedSchema, TerrariaPersistedObject>(
+        "game_terraria",
+        TerrariaPersistedObject,
+    )
 
-    protected metadataDefaultSchema: Omit<
-        TerrariaPersistedSchema,
-        "id" | "timestamp" | "uuid"
-    > = {
+    protected metadataDefaultSchema: Omit<TerrariaPersistedSchema, "id" | "timestamp" | "uuid"> = {
         name: "",
         steam_app_beta_branch: undefined,
         steam_username: undefined,
@@ -75,8 +69,7 @@ class TerrariaScreen extends GameScreen<
             //         (metadata.steam_username = value || undefined),
             // },
             {
-                message:
-                    "Game World Name (e.g., 'Victor-World' for an existing world)",
+                message: "Game World Name (e.g., 'Victor-World' for an existing world)",
                 default: metadata.name,
                 transformer: (value: string) => {
                     return value.trim().replace(/ /g, "-")
@@ -95,17 +88,15 @@ class TerrariaScreen extends GameScreen<
         const worldPath = `${TerrariaScreen.savedWorldsPath}/${metadata.name}.wld`
 
         if (!fs.existsSync(worldPath)) {
-            console.log(
-                `! No existing world found at ${worldPath}, creating a new one`,
-            )
+            console.log(`! No existing world found at ${worldPath}, creating a new one`)
             for (const prompt of [
                 {
                     message: "Game World Size (1=small, 2=medium, 3=large)",
                     default: metadata.game_autocreate?.toString(),
                     validate: (value: string) => {
-                        return value === "1" || value === "2" || value === "3"
-                            ? true
-                            : "World size must be 1, 2 or 3"
+                        return value === "1" || value === "2" || value === "3" ?
+                                true
+                            :   "World size must be 1, 2 or 3"
                     },
                     callback: (value: string) => {
                         metadata.game_autocreate = parseInt(value) as 1 | 2 | 3
@@ -156,9 +147,7 @@ class TerrariaScreen extends GameScreen<
         return metadata
     }
 
-    protected performStartupInitialization = async (
-        instance: TerrariaPersistedObject,
-    ) => {
+    protected performStartupInitialization = async (instance: TerrariaPersistedObject) => {
         await Steam.steamUpdate({
             steamAppId: TerrariaScreen.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,

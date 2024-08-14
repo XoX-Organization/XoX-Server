@@ -106,9 +106,7 @@ class MinecraftJavaScreen extends GameScreen<
                     const { data: fabricData } = await axios.get(
                         `https://meta.fabricmc.net/v2/versions/loader`,
                     )
-                    const fabricVersions = fabricData.map(
-                        (version: any) => version.version,
-                    )
+                    const fabricVersions = fabricData.map((version: any) => version.version)
                     return fabricVersions.includes(modloaderVersion)
 
                 default:
@@ -138,47 +136,32 @@ class MinecraftJavaScreen extends GameScreen<
                     .split("-")[1]
 
                 if (!forgeVersion) {
-                    throw new Error(
-                        `Forge version not found for Minecraft ${minecraftVersion}`,
-                    )
+                    throw new Error(`Forge version not found for Minecraft ${minecraftVersion}`)
                 }
                 return forgeVersion
 
             case "fabric":
                 const { data: fabricData } = await axios.get(fabricHomepage)
-                const fabricStableVersions = fabricData.filter(
-                    (version: any) => version.stable,
-                )
-                const fabricVersion = fabricStableVersions.sort(
-                    (a: any, b: any) => {
-                        const aParts = a.version.split(".").map(Number)
-                        const bParts = b.version.split(".").map(Number)
-                        for (
-                            let i = 0;
-                            i < Math.max(aParts.length, bParts.length);
-                            i++
-                        ) {
-                            if ((aParts[i] || 0) > (bParts[i] || 0)) return -1
-                            if ((aParts[i] || 0) < (bParts[i] || 0)) return 1
-                        }
-                        return 0
-                    },
-                )[0].version
+                const fabricStableVersions = fabricData.filter((version: any) => version.stable)
+                const fabricVersion = fabricStableVersions.sort((a: any, b: any) => {
+                    const aParts = a.version.split(".").map(Number)
+                    const bParts = b.version.split(".").map(Number)
+                    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                        if ((aParts[i] || 0) > (bParts[i] || 0)) return -1
+                        if ((aParts[i] || 0) < (bParts[i] || 0)) return 1
+                    }
+                    return 0
+                })[0].version
 
                 return fabricVersion
 
             default:
-                throw new Error(
-                    `Modloader type ${modloaderType} is not supported`,
-                )
+                throw new Error(`Modloader type ${modloaderType} is not supported`)
         }
     }
 
     protected promptMetadataConfiguration = async (
-        metadata: Omit<
-            MinecraftJavaPersistedSchema,
-            "id" | "timestamp" | "uuid"
-        >,
+        metadata: Omit<MinecraftJavaPersistedSchema, "id" | "timestamp" | "uuid">,
     ) => {
         for (const prompt of [
             {
@@ -198,13 +181,15 @@ class MinecraftJavaScreen extends GameScreen<
                 message: "Working Directory Path (e.g. /path/to/ATM6-3.4.5)",
                 default: metadata.game_working_directory_path,
                 validate: (value: string) => {
-                    return value.trim().length > 0
-                        ? fs.existsSync(value)
-                            ? fs.statSync(value).isDirectory()
-                                ? true
-                                : "Path is not a directory"
-                            : "Path does not exist"
-                        : "Path cannot be empty"
+                    return (
+                        value.trim().length > 0 ?
+                            fs.existsSync(value) ?
+                                fs.statSync(value).isDirectory() ?
+                                    true
+                                :   "Path is not a directory"
+                            :   "Path does not exist"
+                        :   "Path cannot be empty"
+                    )
                 },
                 callback: (value: string) => {
                     metadata.game_working_directory_path = value
@@ -214,9 +199,9 @@ class MinecraftJavaScreen extends GameScreen<
                 message: "Minecraft Java Edition Version (e.g. 1.16.5)",
                 default: metadata.game_version,
                 validate: async (value: string) => {
-                    return (await this.isVersionExists("minecraft", value))
-                        ? true
-                        : "Version does not exist"
+                    return (await this.isVersionExists("minecraft", value)) ?
+                            true
+                        :   "Version does not exist"
                 },
                 callback: (value: string) => {
                     metadata.game_version = value.trim()
@@ -229,9 +214,9 @@ class MinecraftJavaScreen extends GameScreen<
                     return value.toLowerCase()
                 },
                 validate: (value: string) => {
-                    return value === "forge" || value === "fabric"
-                        ? true
-                        : "Type must be forge or fabric"
+                    return value === "forge" || value === "fabric" ?
+                            true
+                        :   "Type must be forge or fabric"
                 },
                 callback: (value: string) => {
                     metadata.game_modloader_type = value as "forge" | "fabric"
@@ -241,30 +226,23 @@ class MinecraftJavaScreen extends GameScreen<
             prompt.callback(await input(prompt))
         }
 
-        console.log(
-            "! Retrieving Modloader Versions, this may take few seconds",
-        )
+        console.log("! Retrieving Modloader Versions, this may take few seconds")
 
         metadata.game_modloader_version =
             metadata.game_modloader_version ||
-            (await this.retrieveVersion(
-                metadata.game_modloader_type,
-                metadata.game_version,
-            ))
+            (await this.retrieveVersion(metadata.game_modloader_type, metadata.game_version))
 
         metadata.game_java_version =
             metadata.game_java_version ||
-            MinecraftJavaScreen.minecraftJavaVersionMapping[
-                metadata.game_version.split(".")[1]
-            ]
+            MinecraftJavaScreen.minecraftJavaVersionMapping[metadata.game_version.split(".")[1]]
 
         for (const prompt of [
             {
                 message: [
                     `\u001b]8;;`,
-                    metadata.game_modloader_type === "forge"
-                        ? `https://files.minecraftforge.net/net/minecraftforge/forge/index_${metadata.game_version}.html`
-                        : `https://meta.fabricmc.net/v2/versions/loader`,
+                    metadata.game_modloader_type === "forge" ?
+                        `https://files.minecraftforge.net/net/minecraftforge/forge/index_${metadata.game_version}.html`
+                    :   `https://meta.fabricmc.net/v2/versions/loader`,
                     `\u0007`,
                     `Modloader Version (Leave empty for latest version, e.g. ${metadata.game_modloader_version})`,
                     `\u001b]8;;`,
@@ -272,13 +250,15 @@ class MinecraftJavaScreen extends GameScreen<
                 ].join(""),
                 default: metadata.game_modloader_version,
                 validate: async (value: string) => {
-                    return (await this.isVersionExists(
-                        metadata.game_modloader_type,
-                        metadata.game_version,
-                        value,
-                    ))
-                        ? true
-                        : "Version does not exist"
+                    return (
+                            (await this.isVersionExists(
+                                metadata.game_modloader_type,
+                                metadata.game_version,
+                                value,
+                            ))
+                        ) ?
+                            true
+                        :   "Version does not exist"
                 },
                 callback: (value: string) => {
                     metadata.game_modloader_version = value
@@ -288,9 +268,7 @@ class MinecraftJavaScreen extends GameScreen<
                 message: "Max RAM in MB (e.g. 8192)",
                 default: metadata.game_max_ram.toString(),
                 validate: (value: string) => {
-                    return /^[0-9]+$/.test(value)
-                        ? true
-                        : "RAM cannot be empty or non-numeric"
+                    return /^[0-9]+$/.test(value) ? true : "RAM cannot be empty or non-numeric"
                 },
                 callback: (value: string) => {
                     metadata.game_max_ram = parseInt(value)
@@ -300,9 +278,7 @@ class MinecraftJavaScreen extends GameScreen<
                 message: "Min RAM in MB (e.g. 4096)",
                 default: metadata.game_min_ram.toString(),
                 validate: (value: string) => {
-                    return /^[0-9]+$/.test(value)
-                        ? true
-                        : "RAM cannot be empty or non-numeric"
+                    return /^[0-9]+$/.test(value) ? true : "RAM cannot be empty or non-numeric"
                 },
                 callback: (value: string) => {
                     metadata.game_min_ram = parseInt(value)
@@ -330,33 +306,18 @@ class MinecraftJavaScreen extends GameScreen<
 
         if (
             metadata.gameModloaderType === "forge" &&
-            !(
-                fs.existsSync(forgeUniversalJarPath) &&
-                fs.existsSync(forgeServerJarPath)
-            )
+            !(fs.existsSync(forgeUniversalJarPath) && fs.existsSync(forgeServerJarPath))
         ) {
             if (process.env.NODE_ENV === "development") {
                 console.debug("& Forge Server Jar Path:", forgeServerJarPath)
-                console.debug(
-                    "& Forge Universal Jar Path:",
-                    forgeUniversalJarPath,
-                )
-                console.debug(
-                    "& Forge Installer Jar Path:",
-                    forgeInstallerJarPath,
-                )
-                console.debug(
-                    "& Forge Installer Jar URL:",
-                    forgeInstallerJarUrl,
-                )
+                console.debug("& Forge Universal Jar Path:", forgeUniversalJarPath)
+                console.debug("& Forge Installer Jar Path:", forgeInstallerJarPath)
+                console.debug("& Forge Installer Jar URL:", forgeInstallerJarUrl)
                 console.debug("& Forge Legacy Jar Path:", forgeLegacyJarPath)
             }
             if (!fs.existsSync(forgeInstallerJarPath)) {
                 console.log("! Downloading Forge Installer Jar")
-                await Utilities.download(
-                    forgeInstallerJarUrl,
-                    forgeInstallerJarPath,
-                )
+                await Utilities.download(forgeInstallerJarUrl, forgeInstallerJarPath)
             }
             console.log("! Installing Forge Library")
             await $({
@@ -367,25 +328,13 @@ class MinecraftJavaScreen extends GameScreen<
             fs.rmSync(forgeInstallerJarPath)
         }
 
-        if (
-            metadata.gameModloaderType === "fabric" &&
-            !fs.existsSync(fabricInstallerJarPath)
-        ) {
+        if (metadata.gameModloaderType === "fabric" && !fs.existsSync(fabricInstallerJarPath)) {
             if (process.env.NODE_ENV === "development") {
-                console.debug(
-                    "& Fabric Installer Jar Path:",
-                    fabricInstallerJarPath,
-                )
-                console.debug(
-                    "& Fabric Installer Jar URL:",
-                    fabricInstallerJarUrl,
-                )
+                console.debug("& Fabric Installer Jar Path:", fabricInstallerJarPath)
+                console.debug("& Fabric Installer Jar URL:", fabricInstallerJarUrl)
             }
             console.log("! Downloading Fabric Installer Jar")
-            await Utilities.download(
-                fabricInstallerJarUrl,
-                fabricInstallerJarPath,
-            )
+            await Utilities.download(fabricInstallerJarUrl, fabricInstallerJarPath)
         }
 
         return {
@@ -429,29 +378,19 @@ class MinecraftJavaScreen extends GameScreen<
             return true
         }
         const answer = await confirm({
-            message:
-                "Do you agree to the Minecraft EULA (https://aka.ms/MinecraftEULA)",
+            message: "Do you agree to the Minecraft EULA (https://aka.ms/MinecraftEULA)",
             default: true,
         })
         if (answer) {
-            fs.writeFileSync(
-                eulaPath,
-                eulaText.replace("eula=false", "eula=true"),
-            )
+            fs.writeFileSync(eulaPath, eulaText.replace("eula=false", "eula=true"))
             return true
         }
         return false
     }
 
-    protected performStartupInitialization = async (
-        instance: MinecraftJavaPersistedObject,
-    ) => {
-        const {
-            forgeLibraryPath,
-            forgeLegacyJarPath,
-            forgeShimJarPath,
-            fabricInstallerJarPath,
-        } = await this.setupModloader(instance)
+    protected performStartupInitialization = async (instance: MinecraftJavaPersistedObject) => {
+        const { forgeLibraryPath, forgeLegacyJarPath, forgeShimJarPath, fabricInstallerJarPath } =
+            await this.setupModloader(instance)
 
         if (!(await this.signEula(instance))) {
             return
@@ -463,33 +402,27 @@ class MinecraftJavaScreen extends GameScreen<
             metadata: instance,
             cwd: instance.gameWorkingDirectoryPath,
             screenArgs: [
-                ...(instance.gameModloaderType === "forge" &&
-                fs.existsSync(forgeShimJarPath)
-                    ? [
-                          java,
-                          `-jar`,
-                          forgeShimJarPath,
-                          `--onlyCheckJava ||`,
-                          `exit 1;`,
-                      ]
-                    : []),
+                ...(instance.gameModloaderType === "forge" && fs.existsSync(forgeShimJarPath) ?
+                    [java, `-jar`, forgeShimJarPath, `--onlyCheckJava ||`, `exit 1;`]
+                :   []),
                 java,
                 `-server`,
                 `-Xmx${instance.gameMaxRam}M`,
                 `-Xms${instance.gameMinRam}M`,
-                ...(instance.gameModloaderType === "fabric" ||
-                (instance.gameModloaderType === "forge" &&
-                    fs.existsSync(forgeLegacyJarPath))
-                    ? [
-                          `-jar`,
-                          instance.gameModloaderType === "forge"
-                              ? forgeLegacyJarPath
-                              : fabricInstallerJarPath,
-                      ]
-                    : [
-                          `@${instance.gameWorkingDirectoryPath}/user_jvm_args.txt`,
-                          `@${forgeLibraryPath}/unix_args.txt`,
-                      ]),
+                ...((
+                    instance.gameModloaderType === "fabric" ||
+                    (instance.gameModloaderType === "forge" && fs.existsSync(forgeLegacyJarPath))
+                ) ?
+                    [
+                        `-jar`,
+                        instance.gameModloaderType === "forge" ?
+                            forgeLegacyJarPath
+                        :   fabricInstallerJarPath,
+                    ]
+                :   [
+                        `@${instance.gameWorkingDirectoryPath}/user_jvm_args.txt`,
+                        `@${forgeLibraryPath}/unix_args.txt`,
+                    ]),
                 `nogui`,
             ],
         })

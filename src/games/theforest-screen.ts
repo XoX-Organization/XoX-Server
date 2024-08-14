@@ -41,10 +41,7 @@ class TheForestPersistedObject extends Core.PersistedObject<TheForestPersistedSc
     gameRealisticPlayerDamage = this.raw.game_realistic_player_damage
 }
 
-class TheForestScreen extends GameScreen<
-    TheForestPersistedSchema,
-    TheForestPersistedObject
-> {
+class TheForestScreen extends GameScreen<TheForestPersistedSchema, TheForestPersistedObject> {
     public static steamAppId = "556450"
     public static executableParentDir = `${Steam.steamHomePath()}/TheForestDedicatedServer`
     public static executablePath = `${this.executableParentDir}/TheForestDedicatedServer.exe`
@@ -54,10 +51,7 @@ class TheForestScreen extends GameScreen<
         TheForestPersistedObject
     >("game_theforest", TheForestPersistedObject)
 
-    protected metadataDefaultSchema: Omit<
-        TheForestPersistedSchema,
-        "id" | "timestamp" | "uuid"
-    > = {
+    protected metadataDefaultSchema: Omit<TheForestPersistedSchema, "id" | "timestamp" | "uuid"> = {
         name: "",
         steam_app_beta_branch: undefined,
         steam_username: undefined,
@@ -95,8 +89,7 @@ class TheForestScreen extends GameScreen<
             {
                 message: "Steam App Beta Branch (Leave empty for none)",
                 default: metadata.steam_app_beta_branch,
-                callback: (value: string) =>
-                    (metadata.steam_app_beta_branch = value || undefined),
+                callback: (value: string) => (metadata.steam_app_beta_branch = value || undefined),
             },
             // {
             //     message: "Steam Username (Leave empty for default)",
@@ -108,13 +101,15 @@ class TheForestScreen extends GameScreen<
                 message: "Working Directory Path (e.g. /path/to/theforest)",
                 default: metadata.game_working_directory_path,
                 validate: (value: string) => {
-                    return value.trim().length > 0
-                        ? fs.existsSync(value)
-                            ? fs.statSync(value).isDirectory()
-                                ? true
-                                : "Path is not a directory"
-                            : "Path does not exist"
-                        : "Path cannot be empty"
+                    return (
+                        value.trim().length > 0 ?
+                            fs.existsSync(value) ?
+                                fs.statSync(value).isDirectory() ?
+                                    true
+                                :   "Path is not a directory"
+                            :   "Path does not exist"
+                        :   "Path cannot be empty"
+                    )
                 },
                 callback: (value: string) => {
                     metadata.game_working_directory_path = value
@@ -124,15 +119,12 @@ class TheForestScreen extends GameScreen<
                 message: "Game Difficulty (Peaceful / Normal / Hard)",
                 default: metadata.game_difficulty,
                 validate: (value: string) => {
-                    return ["Peaceful", "Normal", "Hard"].includes(value)
-                        ? true
-                        : "Invalid difficulty"
+                    return ["Peaceful", "Normal", "Hard"].includes(value) ? true : (
+                            "Invalid difficulty"
+                        )
                 },
                 callback: (value: string) => {
-                    metadata.game_difficulty = value as
-                        | "Peaceful"
-                        | "Normal"
-                        | "Hard"
+                    metadata.game_difficulty = value as "Peaceful" | "Normal" | "Hard"
                 },
             },
         ]) {
@@ -178,8 +170,7 @@ class TheForestScreen extends GameScreen<
                 },
             },
             {
-                message:
-                    "Game Allow Enemies Creative (enemy spawn in creative games)",
+                message: "Game Allow Enemies Creative (enemy spawn in creative games)",
                 default: metadata.game_allow_enemies_creative ?? false,
                 callback: (value: boolean) => {
                     metadata.game_allow_enemies_creative = value
@@ -233,16 +224,10 @@ class TheForestScreen extends GameScreen<
             `vegetarianMode ${instance.gameVegetarianMode ? "on" : "off"}`,
             `resetHolesMode ${instance.gameResetHolesMode ? "on" : "off"}`,
             `treeRegrowMode ${instance.gameTreeRegrowMode ? "on" : "off"}`,
-            `allowBuildingDestruction ${
-                instance.gameNoBuildingDestruction ? "off" : "on"
-            }`,
-            `allowEnemiesCreativeMode ${
-                instance.gameAllowEnemiesCreative ? "on" : "off"
-            }`,
+            `allowBuildingDestruction ${instance.gameNoBuildingDestruction ? "off" : "on"}`,
+            `allowEnemiesCreativeMode ${instance.gameAllowEnemiesCreative ? "on" : "off"}`,
             `allowCheats ${instance.gameAllowCheats ? "on" : "off"}`,
-            `realisticPlayerDamage ${
-                instance.gameRealisticPlayerDamage ? "on" : "off"
-            }`,
+            `realisticPlayerDamage ${instance.gameRealisticPlayerDamage ? "on" : "off"}`,
             `saveFolderPath '${instance.gameWorkingDirectoryPath}'`,
             `targetFpsIdle 5`,
             `targetFpsActive 60`,
@@ -252,9 +237,7 @@ class TheForestScreen extends GameScreen<
         return configPath
     }
 
-    protected performStartupInitialization = async (
-        instance: TheForestPersistedObject,
-    ) => {
+    protected performStartupInitialization = async (instance: TheForestPersistedObject) => {
         await Core.verifyRequiredPackages(["wine", "xvfb-run"])
         await Steam.steamUpdate({
             steamAppId: TheForestScreen.steamAppId,
