@@ -3,6 +3,7 @@ import minecraftJavaScreen from "./minecraft-java-screen"
 import terrariaScreen from "./terraria-screen"
 import theforestScreen from "./theforest-screen"
 import tmodloaderScreen from "./tmodloader-screen"
+import valheimScreen from "./valheim-screen"
 
 export default [
     {
@@ -24,5 +25,9 @@ export default [
     {
         name: "The Forest",
         value: theforestScreen,
+    },
+    {
+        name: "Valheim",
+        value: valheimScreen,
     },
 ]
