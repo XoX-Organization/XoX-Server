@@ -24,7 +24,7 @@
     "description": "",
     "dependencies": {
         "@inquirer/prompts": "^5.1.0",
-        "axios": "^1.7.3",
+        "axios": "^1.7.4",
         "cheerio": "^1.0.0-rc.12",
         "knex": "^3.1.0",
         "progress": "^2.0.3",
