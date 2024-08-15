@@ -265,23 +265,35 @@ class MinecraftJavaPage extends GamePage<
                 },
             },
             {
-                message: "Max RAM in MB (e.g. 8192)",
-                default: metadata.game_max_ram.toString(),
-                validate: (value: string) => {
-                    return /^[0-9]+$/.test(value) ? true : "RAM cannot be empty or non-numeric"
-                },
-                callback: (value: string) => {
-                    metadata.game_max_ram = parseInt(value)
-                },
-            },
-            {
                 message: "Min RAM in MB (e.g. 4096)",
                 default: metadata.game_min_ram.toString(),
                 validate: (value: string) => {
-                    return /^[0-9]+$/.test(value) ? true : "RAM cannot be empty or non-numeric"
+                    return (
+                        /^[0-9]+$/.test(value) ?
+                            parseInt(value) >= 1000 ?
+                                true
+                            :   "RAM must be at least 1000 MB"
+                        :   "RAM cannot be empty or non-numeric"
+                    )
                 },
                 callback: (value: string) => {
                     metadata.game_min_ram = parseInt(value)
+                },
+            },
+            {
+                message: "Max RAM in MB (e.g. 8192)",
+                default: metadata.game_max_ram.toString(),
+                validate: (value: string) => {
+                    return (
+                        /^[0-9]+$/.test(value) ?
+                            parseInt(value) >= metadata.game_min_ram ?
+                                true
+                            :   `Max RAM must be greater than the minimum RAM requirement of ${metadata.game_min_ram} MB.`
+                        :   "RAM cannot be empty or non-numeric"
+                    )
+                },
+                callback: (value: string) => {
+                    metadata.game_max_ram = parseInt(value)
                 },
             },
         ]) {
@@ -320,12 +332,16 @@ class MinecraftJavaPage extends GamePage<
                 await Utilities.download(forgeInstallerJarUrl, forgeInstallerJarPath)
             }
             console.log("! Installing Forge Library")
+
+            const java = this.setupJava(metadata)
+
             await $({
                 cwd: metadata.gameWorkingDirectoryPath,
-            })`java -jar ${forgeInstallerJarPath} --installServer`.pipe(
+            })`${java} -jar ${forgeInstallerJarPath} --installServer`.pipe(
                 new Utilities.CarriageReturnWritableStream(),
             )
             fs.rmSync(forgeInstallerJarPath)
+            fs.rmSync(`${forgeInstallerJarPath}.log`)
         }
 
         if (metadata.gameModloaderType === "fabric" && !fs.existsSync(fabricInstallerJarPath)) {

@@ -11,7 +11,7 @@ export class CarriageReturnWritableStream extends Writable {
                     return
                 }
                 process.stdout.write(
-                    `\r> ${message.slice(0, process.stdout.columns)}`.padEnd(
+                    `\r> ${message.slice(0, process.stdout.columns - 10)}`.padEnd(
                         process.stdout.columns + 1,
                     ),
                 )
