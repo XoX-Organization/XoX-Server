@@ -2,12 +2,12 @@ import { input } from "@inquirer/prompts"
 import fs from "fs"
 import os from "os"
 import { $ } from "zx/core"
-import * as Core from "."
-import GameScreen from "./game-screen"
+import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
 import * as Steam from "./integrations/steam"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-interface TerrariaPersistedSchema extends Core.PersistedSchema {
+interface TerrariaPersistedSchema extends PersistedSchema {
     steam_app_beta_branch?: string
     steam_username?: string
 
@@ -18,7 +18,7 @@ interface TerrariaPersistedSchema extends Core.PersistedSchema {
     game_motd?: string
 }
 
-class TerrariaPersistedObject extends Core.PersistedObject<TerrariaPersistedSchema> {
+class TerrariaPersistedObject extends PersistedObject<TerrariaPersistedSchema> {
     steamAppBetaBranch = this.raw.steam_app_beta_branch
     steamUsername = this.raw.steam_username
 
@@ -29,12 +29,12 @@ class TerrariaPersistedObject extends Core.PersistedObject<TerrariaPersistedSche
     gameMotd = this.raw.game_motd
 }
 
-class TerrariaScreen extends GameScreen<TerrariaPersistedSchema, TerrariaPersistedObject> {
+class TerrariaPage extends GamePage<TerrariaPersistedSchema, TerrariaPersistedObject> {
     public static steamAppId = "105600"
     public static executablePath = `${Steam.steamHomePath()}/Terraria/TerrariaServer.bin.x86_64`
     public static savedWorldsPath = `${os.homedir()}/.local/share/Terraria/Worlds`
 
-    protected persistence = new Core.Persistence<TerrariaPersistedSchema, TerrariaPersistedObject>(
+    protected persistence = new Persistence<TerrariaPersistedSchema, TerrariaPersistedObject>(
         "game_terraria",
         TerrariaPersistedObject,
     )
@@ -85,7 +85,7 @@ class TerrariaScreen extends GameScreen<TerrariaPersistedSchema, TerrariaPersist
             prompt.callback(await input(prompt))
         }
 
-        const worldPath = `${TerrariaScreen.savedWorldsPath}/${metadata.name}.wld`
+        const worldPath = `${TerrariaPage.savedWorldsPath}/${metadata.name}.wld`
 
         if (!fs.existsSync(worldPath)) {
             console.log(`! No existing world found at ${worldPath}, creating a new one`)
@@ -149,17 +149,17 @@ class TerrariaScreen extends GameScreen<TerrariaPersistedSchema, TerrariaPersist
 
     protected performStartupInitialization = async (instance: TerrariaPersistedObject) => {
         await Steam.steamUpdate({
-            steamAppId: TerrariaScreen.steamAppId,
+            steamAppId: TerrariaPage.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: false,
             steamUsername: instance.steamUsername,
         })
-        $`chmod +x ${TerrariaScreen.executablePath}`
+        $`chmod +x ${TerrariaPage.executablePath}`
         await Screen.createScreen({
             metadata: instance,
             screenArgs: [
-                TerrariaScreen.executablePath,
-                `-world "${TerrariaScreen.savedWorldsPath}/${instance.name}.wld"`,
+                TerrariaPage.executablePath,
+                `-world "${TerrariaPage.savedWorldsPath}/${instance.name}.wld"`,
                 `-autocreate ${instance.gameAutocreate}`,
                 `-worldname "${instance.name}"`,
                 instance.gameSeed ? `-seed "${instance.gameSeed}"` : "",
@@ -171,4 +171,4 @@ class TerrariaScreen extends GameScreen<TerrariaPersistedSchema, TerrariaPersist
     }
 }
 
-export default new TerrariaScreen()
+export default new TerrariaPage()

@@ -3,13 +3,14 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "build": "NODE_ENV=development webpack",
         "build:prod": "NODE_ENV=production webpack",
-        "migrate": "npx knex migrate:latest --env development",
-        "migrate:prod": "npx knex migrate:latest --env production",
-        "start": "NODE_ENV=development node dist/main.js",
+        "build": "NODE_ENV=development webpack",
         "clean": "rm -rf dist",
-        "prettier": "prettier --write '{src,test}/**/*.{mjs,ts,tsx,sql}'"
+        "migrate:prod": "npx knex migrate:latest --env production",
+        "migrate": "npx knex migrate:latest --env development",
+        "prettier": "prettier --write '{src,test}/**/*.{mjs,ts,tsx,sql}'",
+        "start": "NODE_ENV=development node dist/main.js",
+        "typecheck": "tsc --noEmit --project tsconfig.json"
     },
     "repository": {
         "type": "git",

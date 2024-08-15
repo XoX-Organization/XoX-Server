@@ -1,11 +1,9 @@
 import { confirm, select, Separator } from "@inquirer/prompts"
-import { PersistedObject, PersistedSchema, Persistence } from "."
-import Screen from "../common/screen"
-import * as IntegratedScreen from "./integrations/screen"
+import Page from "../common/page"
+import * as Screen from "./integrations/screen"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T>>
-    implements Screen
-{
+abstract class GamePage<T extends PersistedSchema, U extends PersistedObject<T>> implements Page {
     /**
      * The persistence object for the game
      */
@@ -26,7 +24,7 @@ abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T
     /**
      * The function to prompt the user to create a new instance
      */
-    protected promptCreateScreen = async () => {
+    protected promptCreatePage = async () => {
         await this.persistence.createInstance(
             await this.promptMetadataConfiguration(this.metadataDefaultSchema),
         )
@@ -35,7 +33,7 @@ abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T
     /**
      * The function to prompt the user to update an existing instance
      */
-    protected promptUpdateScreen = async (instances: U[]) => {
+    protected promptUpdatePage = async (instances: U[]) => {
         const selected = await select({
             message: "Which instance would you like to update",
             choices: [
@@ -63,7 +61,7 @@ abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T
     /**
      * The function to prompt the user to delete an existing instance
      */
-    protected promptDeleteScreen = async (instances: U[]) => {
+    protected promptDeletePage = async (instances: U[]) => {
         const selectInstance = await select({
             message: "Which instance would you like to delete",
             choices: [
@@ -137,23 +135,23 @@ abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T
             }
             switch (selectInstance) {
                 case -1:
-                    await this.promptCreateScreen()
+                    await this.promptCreatePage()
                     break
                 case -2:
-                    await this.promptUpdateScreen(availableInstances)
+                    await this.promptUpdatePage(availableInstances)
                     break
                 case -3:
-                    await this.promptDeleteScreen(availableInstances)
+                    await this.promptDeletePage(availableInstances)
                     break
                 default:
                     await this.performStartupInitialization(availableInstances[selectInstance])
-                    if (await IntegratedScreen.existsScreen(availableInstances[selectInstance])) {
+                    if (await Screen.existsScreen(availableInstances[selectInstance])) {
                         const attachToScreen = await confirm({
                             message: "Do you want to attach the screen to the terminal",
                             default: true,
                         })
                         if (attachToScreen) {
-                            await IntegratedScreen.attachScreen(availableInstances[selectInstance])
+                            await Screen.attachScreen(availableInstances[selectInstance])
                         }
                     }
                     break
@@ -163,4 +161,4 @@ abstract class GameScreen<T extends PersistedSchema, U extends PersistedObject<T
     }
 }
 
-export default GameScreen
+export default GamePage

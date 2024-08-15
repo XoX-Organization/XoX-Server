@@ -3,28 +3,28 @@ import axios from "axios"
 import * as cheerio from "cheerio"
 import fs from "fs"
 import { $ } from "zx/core"
-import * as Core from "."
 import * as Utilities from "../utilities"
-import GameScreen from "./game-screen"
+import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-interface MinecraftBedrockPersistedSchema extends Core.PersistedSchema {
+interface MinecraftBedrockPersistedSchema extends PersistedSchema {
     game_working_directory_path: string
 
     // https://minecraft.fandom.com/wiki/Bedrock_Dedicated_Server#Download
     game_server_version: string
 }
 
-class MinecraftBedrockPersistedObject extends Core.PersistedObject<MinecraftBedrockPersistedSchema> {
+class MinecraftBedrockPersistedObject extends PersistedObject<MinecraftBedrockPersistedSchema> {
     gameWorkingDirectoryPath = this.raw.game_working_directory_path
     gameServerVersion = this.raw.game_server_version
 }
 
-class MinecraftBedrockScreen extends GameScreen<
+class MinecraftBedrockPage extends GamePage<
     MinecraftBedrockPersistedSchema,
     MinecraftBedrockPersistedObject
 > {
-    protected persistence = new Core.Persistence<
+    protected persistence = new Persistence<
         MinecraftBedrockPersistedSchema,
         MinecraftBedrockPersistedObject
     >("game_minecraft_bedrock", MinecraftBedrockPersistedObject)
@@ -164,4 +164,4 @@ class MinecraftBedrockScreen extends GameScreen<
     }
 }
 
-export default new MinecraftBedrockScreen()
+export default new MinecraftBedrockPage()

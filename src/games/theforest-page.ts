@@ -2,11 +2,12 @@ import { confirm, input } from "@inquirer/prompts"
 import fs from "fs"
 import path from "path"
 import * as Core from "."
-import GameScreen from "./game-screen"
+import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
 import * as Steam from "./integrations/steam"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-interface TheForestPersistedSchema extends Core.PersistedSchema {
+interface TheForestPersistedSchema extends PersistedSchema {
     steam_app_beta_branch?: string
     steam_username?: string
 
@@ -24,7 +25,7 @@ interface TheForestPersistedSchema extends Core.PersistedSchema {
     game_realistic_player_damage?: boolean
 }
 
-class TheForestPersistedObject extends Core.PersistedObject<TheForestPersistedSchema> {
+class TheForestPersistedObject extends PersistedObject<TheForestPersistedSchema> {
     steamAppBetaBranch = this.raw.steam_app_beta_branch
     steamUsername = this.raw.steam_username
 
@@ -41,15 +42,15 @@ class TheForestPersistedObject extends Core.PersistedObject<TheForestPersistedSc
     gameRealisticPlayerDamage = this.raw.game_realistic_player_damage
 }
 
-class TheForestScreen extends GameScreen<TheForestPersistedSchema, TheForestPersistedObject> {
+class TheForestPage extends GamePage<TheForestPersistedSchema, TheForestPersistedObject> {
     public static steamAppId = "556450"
     public static executableParentDir = `${Steam.steamHomePath()}/TheForestDedicatedServer`
     public static executablePath = `${this.executableParentDir}/TheForestDedicatedServer.exe`
 
-    protected persistence = new Core.Persistence<
-        TheForestPersistedSchema,
-        TheForestPersistedObject
-    >("game_theforest", TheForestPersistedObject)
+    protected persistence = new Persistence<TheForestPersistedSchema, TheForestPersistedObject>(
+        "game_theforest",
+        TheForestPersistedObject,
+    )
 
     protected metadataDefaultSchema: Omit<TheForestPersistedSchema, "id" | "timestamp" | "uuid"> = {
         name: "",
@@ -240,7 +241,7 @@ class TheForestScreen extends GameScreen<TheForestPersistedSchema, TheForestPers
     protected performStartupInitialization = async (instance: TheForestPersistedObject) => {
         await Core.verifyRequiredPackages(["wine", "xvfb-run"])
         await Steam.steamUpdate({
-            steamAppId: TheForestScreen.steamAppId,
+            steamAppId: TheForestPage.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: true,
             steamUsername: instance.steamUsername,
@@ -249,10 +250,10 @@ class TheForestScreen extends GameScreen<TheForestPersistedSchema, TheForestPers
         const configPath = this.generateConfigs(instance)
         await Screen.createScreen({
             metadata: instance,
-            cwd: TheForestScreen.executableParentDir,
+            cwd: TheForestPage.executableParentDir,
             screenArgs: [
                 `xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32'`,
-                `wine ${TheForestScreen.executablePath}`,
+                `wine ${TheForestPage.executablePath}`,
                 `-batchmode`,
                 `-nographics`,
                 `-configfilepath '${configPath}'`,
@@ -261,4 +262,4 @@ class TheForestScreen extends GameScreen<TheForestPersistedSchema, TheForestPers
     }
 }
 
-export default new TheForestScreen()
+export default new TheForestPage()

@@ -1,29 +1,29 @@
 import { input } from "@inquirer/prompts"
 import fs from "fs"
 import os from "os"
-import * as Core from "."
-import GameScreen from "./game-screen"
+import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
 import * as Steam from "./integrations/steam"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-interface ValheimPersistedSchema extends Core.PersistedSchema {
+interface ValheimPersistedSchema extends PersistedSchema {
     steam_app_beta_branch?: string
     steam_username?: string
 }
 
-class ValheimPersistedObject extends Core.PersistedObject<ValheimPersistedSchema> {
+class ValheimPersistedObject extends PersistedObject<ValheimPersistedSchema> {
     steamAppBetaBranch = this.raw.steam_app_beta_branch
     steamUsername = this.raw.steam_username
 }
 
-class ValheimScreen extends GameScreen<ValheimPersistedSchema, ValheimPersistedObject> {
+class ValheimPage extends GamePage<ValheimPersistedSchema, ValheimPersistedObject> {
     public static steamAppId = "896660"
     public static executableParentDir = `${Steam.steamHomePath()}/Valheim dedicated server`
-    public static executablePath = `${ValheimScreen.executableParentDir}/valheim_server.x86_64`
+    public static executablePath = `${ValheimPage.executableParentDir}/valheim_server.x86_64`
 
     public static savedWorldsPath = `${os.homedir()}/.config/unity3d/IronGate/Valheim/worlds_local`
 
-    protected persistence = new Core.Persistence<ValheimPersistedSchema, ValheimPersistedObject>(
+    protected persistence = new Persistence<ValheimPersistedSchema, ValheimPersistedObject>(
         "game_valheim",
         ValheimPersistedObject,
     )
@@ -50,7 +50,7 @@ class ValheimScreen extends GameScreen<ValheimPersistedSchema, ValheimPersistedO
                 callback: (value: string) => {
                     metadata.name = value
                     const worldPath = `${
-                        ValheimScreen.savedWorldsPath
+                        ValheimPage.savedWorldsPath
                     }/${metadata.name.toLowerCase()}.fwl`
                     console.log(
                         fs.existsSync(worldPath) ?
@@ -78,19 +78,19 @@ class ValheimScreen extends GameScreen<ValheimPersistedSchema, ValheimPersistedO
 
     protected performStartupInitialization = async (instance: ValheimPersistedObject) => {
         await Steam.steamUpdate({
-            steamAppId: ValheimScreen.steamAppId,
+            steamAppId: ValheimPage.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: true,
             steamUsername: instance.steamUsername,
         })
         await Screen.createScreen({
             metadata: instance,
-            cwd: ValheimScreen.executableParentDir,
+            cwd: ValheimPage.executableParentDir,
             screenArgs: [
                 `TEMP_LD_LIBRARY_PATH=\\\${LD_LIBRARY_PATH:-};`,
                 `export LD_LIBRARY_PATH=./linux64:\\\$LD_LIBRARY_PATH;`,
                 `export SteamAppId=892970;`,
-                `'${ValheimScreen.executablePath}'`,
+                `'${ValheimPage.executablePath}'`,
                 `-name '${instance.name}'`,
                 `-port '2456'`,
                 `-world '${instance.name.toLowerCase()}'`,
@@ -104,4 +104,4 @@ class ValheimScreen extends GameScreen<ValheimPersistedSchema, ValheimPersistedO
     }
 }
 
-export default new ValheimScreen()
+export default new ValheimPage()

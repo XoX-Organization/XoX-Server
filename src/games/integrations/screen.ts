@@ -1,5 +1,5 @@
 import { $ } from "zx/core"
-import { PersistedObject } from ".."
+import { PersistedObject } from "../persistences"
 
 const nameScreen = <T extends PersistedObject>(metadata: T) => {
     return `${metadata.name}-${metadata.uuid}`

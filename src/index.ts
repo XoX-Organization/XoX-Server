@@ -1,4 +1,4 @@
-import startScreen from "./start-screen"
+import startPage from "./games"
 
 process.on("SIGINT", () => {
     process.exit(1)
@@ -13,7 +13,7 @@ if (process.getuid && process.getuid() === 0) {
 
 const main = async () => {
     try {
-        await startScreen.show()
+        await startPage.show()
         process.exit(0)
     } catch (error: any) {
         if (process.env.NODE_ENV === "development") {

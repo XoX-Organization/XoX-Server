@@ -1,11 +1,11 @@
 import { input } from "@inquirer/prompts"
 import fs from "fs"
-import * as Core from "."
-import GameScreen from "./game-screen"
+import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
 import * as Steam from "./integrations/steam"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-interface TModLoaderPersistedSchema extends Core.PersistedSchema {
+interface TModLoaderPersistedSchema extends PersistedSchema {
     steam_app_beta_branch?: string
     steam_username?: string
 
@@ -18,7 +18,7 @@ interface TModLoaderPersistedSchema extends Core.PersistedSchema {
     game_motd?: string
 }
 
-class TModLoaderPersistedObject extends Core.PersistedObject<TModLoaderPersistedSchema> {
+class TModLoaderPersistedObject extends PersistedObject<TModLoaderPersistedSchema> {
     steamAppBetaBranch = this.raw.steam_app_beta_branch
     steamUsername = this.raw.steam_username
 
@@ -31,14 +31,14 @@ class TModLoaderPersistedObject extends Core.PersistedObject<TModLoaderPersisted
     gameMotd = this.raw.game_motd
 }
 
-class TModLoaderScreen extends GameScreen<TModLoaderPersistedSchema, TModLoaderPersistedObject> {
+class TModLoaderPage extends GamePage<TModLoaderPersistedSchema, TModLoaderPersistedObject> {
     public static steamAppId = "1281930"
     public static executablePath = `${Steam.steamHomePath()}/tModLoader/start-tModLoaderServer.sh`
 
-    protected persistence = new Core.Persistence<
-        TModLoaderPersistedSchema,
-        TModLoaderPersistedObject
-    >("game_tmodloader", TModLoaderPersistedObject)
+    protected persistence = new Persistence<TModLoaderPersistedSchema, TModLoaderPersistedObject>(
+        "game_tmodloader",
+        TModLoaderPersistedObject,
+    )
 
     protected metadataDefaultSchema: Omit<TModLoaderPersistedSchema, "id" | "timestamp" | "uuid"> =
         {
@@ -195,7 +195,7 @@ class TModLoaderScreen extends GameScreen<TModLoaderPersistedSchema, TModLoaderP
 
     protected performStartupInitialization = async (instance: TModLoaderPersistedObject) => {
         await Steam.steamUpdate({
-            steamAppId: TModLoaderScreen.steamAppId,
+            steamAppId: TModLoaderPage.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: false,
             steamUsername: instance.steamUsername,
@@ -204,7 +204,7 @@ class TModLoaderScreen extends GameScreen<TModLoaderPersistedSchema, TModLoaderP
         await Screen.createScreen({
             metadata: instance,
             screenArgs: [
-                TModLoaderScreen.executablePath,
+                TModLoaderPage.executablePath,
                 `-nosteam`,
                 `-tmlsavedirectory "${instance.gameWorkingDirectoryPath}"`,
                 `-steamworkshopfolder none`,
@@ -220,4 +220,4 @@ class TModLoaderScreen extends GameScreen<TModLoaderPersistedSchema, TModLoaderP
     }
 }
 
-export default new TModLoaderScreen()
+export default new TModLoaderPage()

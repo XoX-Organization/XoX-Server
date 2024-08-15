@@ -3,12 +3,12 @@ import axios from "axios"
 import * as cheerio from "cheerio"
 import fs from "fs"
 import { $ } from "zx/core"
-import * as Core from "."
 import * as Utilities from "../utilities"
-import GameScreen from "./game-screen"
+import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
+import { PersistedObject, PersistedSchema, Persistence } from "./persistences"
 
-interface MinecraftJavaPersistedSchema extends Core.PersistedSchema {
+interface MinecraftJavaPersistedSchema extends PersistedSchema {
     game_working_directory_path: string
 
     // The Minecraft Java Edition version
@@ -27,7 +27,7 @@ interface MinecraftJavaPersistedSchema extends Core.PersistedSchema {
     game_java_version: number
 }
 
-class MinecraftJavaPersistedObject extends Core.PersistedObject<MinecraftJavaPersistedSchema> {
+class MinecraftJavaPersistedObject extends PersistedObject<MinecraftJavaPersistedSchema> {
     gameWorkingDirectoryPath = this.raw.game_working_directory_path
     gameVersion = this.raw.game_version
     gameModloaderType = this.raw.game_modloader_type
@@ -37,7 +37,7 @@ class MinecraftJavaPersistedObject extends Core.PersistedObject<MinecraftJavaPer
     gameJavaVersion = this.raw.game_java_version
 }
 
-class MinecraftJavaScreen extends GameScreen<
+class MinecraftJavaPage extends GamePage<
     MinecraftJavaPersistedSchema,
     MinecraftJavaPersistedObject
 > {
@@ -64,7 +64,7 @@ class MinecraftJavaScreen extends GameScreen<
         26: 21,
     }
 
-    protected persistence = new Core.Persistence<
+    protected persistence = new Persistence<
         MinecraftJavaPersistedSchema,
         MinecraftJavaPersistedObject
     >("game_minecraft_java", MinecraftJavaPersistedObject)
@@ -234,7 +234,7 @@ class MinecraftJavaScreen extends GameScreen<
 
         metadata.game_java_version =
             metadata.game_java_version ||
-            MinecraftJavaScreen.minecraftJavaVersionMapping[metadata.game_version.split(".")[1]]
+            MinecraftJavaPage.minecraftJavaVersionMapping[metadata.game_version.split(".")[1]]
 
         for (const prompt of [
             {
@@ -429,4 +429,4 @@ class MinecraftJavaScreen extends GameScreen<
     }
 }
 
-export default new MinecraftJavaScreen()
+export default new MinecraftJavaPage()
