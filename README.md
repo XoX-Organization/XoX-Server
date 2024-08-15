@@ -6,8 +6,11 @@ Welcome to **XoX Server** – it's a super cool tool I made to help manage game 
 
 > ## How to Get It Working
 
-> [!IMPORTANT]
+> [!NOTE]
 > Before you start, make sure you have `Node.js` and `npm` installed on your computer. If you don't, you can use [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating) to easily install them. It's super important, so don't skip this step! 😎
+
+> [!IMPORTANT]
+> This program is made for **Linux OS** only. It doesn't support Windows at all, so make sure you're running it on a Linux system. 🐧
 
 Let's get started! Follow these steps:
 
