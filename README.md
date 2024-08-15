@@ -11,7 +11,7 @@ Let's get started! Follow these steps:
 1. **Clone the Repository**  
    First, grab the code from the internet and put it on your computer:
    ```bash
-   git clone https://github.com/yourusername/xox-server.git
+   git clone https://github.com/xox-organization/xox-server.git
    ```
    
 2. **Build the Project**  
