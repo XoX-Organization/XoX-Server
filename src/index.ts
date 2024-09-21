@@ -4,7 +4,7 @@ process.on("SIGINT", () => {
     process.exit(1)
 })
 
-if (process.getuid && process.getuid() === 0) {
+if (process.env.NODE_ENV !== "development" && process.getuid?.() === 0) {
     console.error(
         "This program is not meant to be run as root as it may break some of the environment things",
     )
