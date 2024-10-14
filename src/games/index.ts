@@ -7,6 +7,7 @@ import terrariaPage from "./terraria-page"
 import theforestPage from "./theforest-page"
 import tmodloaderPage from "./tmodloader-page"
 import valheimPage from "./valheim-page"
+import doNotStarveTogetherPage from "./do-not-starve-together-page"
 
 $.quote = (str: string) => str
 $.quiet = true
@@ -45,6 +46,10 @@ class StartPage implements Page {
                         {
                             name: "Minecraft (Bedrock Edition)",
                             value: minecraftBedrockPage,
+                        },
+                        {
+                            name: "Don't Starve Together",
+                            value: doNotStarveTogetherPage,
                         },
                         {
                             name: "The Forest",
