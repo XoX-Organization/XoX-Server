@@ -47,6 +47,8 @@ export const steamUpdate = async ({
 
     const command = [
         steamPath,
+        `+@ShutdownOnFailedCommand 1`,
+        `+@NoPromptForPassword 1`,
         `+@sSteamCmdForcePlatformType "${
             (targetPlatform ?? os.platform() === "win32") ? "windows" : "linux"
         }"`,

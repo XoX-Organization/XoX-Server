@@ -23,7 +23,7 @@ export const createScreen = async <T extends PersistedObject>({
         throw new Error(`Screen ${nameScreen(metadata)} already exists, aborting`)
     }
     if (screenArgs.some((arg) => arg.match(/"/))) {
-        throw new Error(`Screen arguments contain illegal semicolon`)
+        throw new Error(`Screen arguments contain illegal double quotes`)
     }
 
     const command = [

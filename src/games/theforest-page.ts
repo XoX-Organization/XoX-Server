@@ -253,7 +253,7 @@ class TheForestPage extends GamePage<TheForestPersistedSchema, TheForestPersiste
             cwd: TheForestPage.executableParentDir,
             screenArgs: [
                 `xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32'`,
-                `wine ${TheForestPage.executablePath}`,
+                `wine '${TheForestPage.executablePath}'`,
                 `-batchmode`,
                 `-nographics`,
                 `-configfilepath '${configPath}'`,
