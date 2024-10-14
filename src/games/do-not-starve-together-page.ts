@@ -96,13 +96,13 @@ class DoNotStarveTogetherPage extends GamePage<
     protected performStartupInitialization = async (
         instance: DoNotStarveTogetherPersistedObject,
     ) => {
-        // sudo apt-get install libcurl4-gnutls-dev:i386
-        // await Steam.steamUpdate({
-        //     steamAppId: DoNotStarveTogetherPage.steamAppId,
-        //     steamAppBetaBranch: instance.steamAppBetaBranch,
-        //     steamLoginAnonymous: true,
-        //     steamUsername: instance.steamUsername,
-        // })
+        await Steam.steamUpdate({
+            steamAppId: DoNotStarveTogetherPage.steamAppId,
+            steamAppBetaBranch: instance.steamAppBetaBranch,
+            steamLoginAnonymous: true,
+            steamUsername: instance.steamUsername,
+        })
+        await $`dpkg -l | grep libcurl4-gnutls-dev:i386 || sudo apt-get update && sudo apt-get install -y libcurl4-gnutls-dev:i386`
         await Screen.createScreen({
             metadata: instance,
             cwd: DoNotStarveTogetherPage.executableParentDir,
