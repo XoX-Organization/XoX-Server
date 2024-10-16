@@ -104,13 +104,25 @@ class DoNotStarveTogetherPage extends GamePage<
         })
         await $`dpkg -l | grep libcurl4-gnutls-dev:i386 || sudo apt-get update && sudo apt-get install -y libcurl4-gnutls-dev:i386`
         await Screen.createScreen({
-            metadata: instance,
+            metadata: { ...instance, name: `${instance.name}-master` },
             cwd: DoNotStarveTogetherPage.executableParentDir,
             screenArgs: [
                 `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
                 `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
                 `-persistent_storage_root '${instance.gameWorkingDirectoryPath}'`,
                 `-conf_dir ${instance.name}-${instance.uuid}`,
+                `-shard Master`,
+            ],
+        })
+        await Screen.createScreen({
+            metadata: { ...instance, name: `${instance.name}-caves` },
+            cwd: DoNotStarveTogetherPage.executableParentDir,
+            screenArgs: [
+                `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
+                `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
+                `-persistent_storage_root '${instance.gameWorkingDirectoryPath}'`,
+                `-conf_dir ${instance.name}-${instance.uuid}`,
+                `-shard Caves`,
             ],
         })
     }
