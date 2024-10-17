@@ -1,6 +1,6 @@
 import { confirm, input } from "@inquirer/prompts"
 import fs from "fs"
-import { $ } from "zx/."
+import { $ } from "zx"
 import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
 import * as Steam from "./integrations/steam"
