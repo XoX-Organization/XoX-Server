@@ -29,8 +29,8 @@ class DoNotStarveTogetherPage extends GamePage<
     DoNotStarveTogetherPersistedObject
 > {
     public static steamAppId = "343050"
-    public static executableParentDir = `${Steam.steamHomePath()}/Don't Starve Together Dedicated Server/bin`
-    public static executablePath = `${this.executableParentDir}/dontstarve_dedicated_server_nullrenderer`
+    public static executableParentDir = `${Steam.steamHomePath()}/Don't Starve Together Dedicated Server/bin64`
+    public static executablePath = `${this.executableParentDir}/dontstarve_dedicated_server_nullrenderer_x64`
 
     protected persistence = new Persistence<
         DoNotStarveTogetherPersistedSchema,
