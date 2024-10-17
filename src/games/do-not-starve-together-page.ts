@@ -29,8 +29,9 @@ class DoNotStarveTogetherPage extends GamePage<
     DoNotStarveTogetherPersistedObject
 > {
     public static steamAppId = "343050"
-    public static executableParentDir = `${Steam.steamHomePath()}/Don't Starve Together Dedicated Server/bin64`
-    public static executablePath = `${this.executableParentDir}/dontstarve_dedicated_server_nullrenderer_x64`
+    public static executableParentDir = `${Steam.steamHomePath()}/Don't Starve Together Dedicated Server`
+    public static executableBinDir = `${this.executableParentDir}/bin64`
+    public static executablePath = `${this.executableBinDir}/dontstarve_dedicated_server_nullrenderer_x64`
 
     protected persistence = new Persistence<
         DoNotStarveTogetherPersistedSchema,
@@ -114,16 +115,24 @@ class DoNotStarveTogetherPage extends GamePage<
     protected performStartupInitialization = async (
         instance: DoNotStarveTogetherPersistedObject,
     ) => {
+        const executableModsDir = `${DoNotStarveTogetherPage.executableParentDir}/mods`
+        await $`cp "${executableModsDir}/dedicated_server_mods_setup.lua" "${executableModsDir}/dedicated_server_mods_setup.lua.bak"`
+        await $`cp "${executableModsDir}/modsettings.lua" "${executableModsDir}/modsettings.lua.bak"`
+
         await Steam.steamUpdate({
             steamAppId: DoNotStarveTogetherPage.steamAppId,
             steamAppBetaBranch: instance.steamAppBetaBranch,
             steamLoginAnonymous: true,
             steamUsername: instance.steamUsername,
         })
+
+        await $`cp "${executableModsDir}/dedicated_server_mods_setup.lua.bak" "${executableModsDir}/dedicated_server_mods_setup.lua"`
+        await $`cp "${executableModsDir}/modsettings.lua.bak" "${executableModsDir}/modsettings.lua"`
+
         await $`dpkg -l | grep libcurl4-gnutls-dev:i386 || sudo apt-get install -y libcurl4-gnutls-dev:i386`
         await Screen.createScreen({
             metadata: instance,
-            cwd: DoNotStarveTogetherPage.executableParentDir,
+            cwd: DoNotStarveTogetherPage.executableBinDir,
             screenArgs: [
                 `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
                 `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
@@ -135,7 +144,7 @@ class DoNotStarveTogetherPage extends GamePage<
         if (instance.gameEnableCaves) {
             await Screen.createScreen({
                 metadata: { ...instance, name: `${instance.name}-caves` },
-                cwd: DoNotStarveTogetherPage.executableParentDir,
+                cwd: DoNotStarveTogetherPage.executableBinDir,
                 screenArgs: [
                     `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
                     `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
