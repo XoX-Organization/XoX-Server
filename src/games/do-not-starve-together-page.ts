@@ -1,6 +1,7 @@
 import { confirm, input } from "@inquirer/prompts"
 import fs from "fs"
 import { $ } from "zx"
+import { CarriageReturnWritableStream } from "../utilities"
 import GamePage from "./game-page"
 import * as Screen from "./integrations/screen"
 import * as Steam from "./integrations/steam"
@@ -112,12 +113,29 @@ class DoNotStarveTogetherPage extends GamePage<
         return metadata
     }
 
+    private configureRequiredMods = (
+        modoverridesLuaFilePath: string,
+        dedicatedServerModsSetupLuaFilePath: string,
+    ) => {
+        const data = fs.readFileSync(modoverridesLuaFilePath, "utf8")
+        const regex = /workshop-(\d+)/g
+
+        let workshopIds: string[] = []
+        let match
+
+        while ((match = regex.exec(data)) !== null) {
+            workshopIds.push(match[1])
+        }
+
+        const outputContent = workshopIds.map((id) => `ServerModSetup("${id}")`).join("\n")
+
+        fs.writeFileSync(dedicatedServerModsSetupLuaFilePath, outputContent, "utf8")
+    }
+
     protected performStartupInitialization = async (
         instance: DoNotStarveTogetherPersistedObject,
     ) => {
         const executableModsDir = `${DoNotStarveTogetherPage.executableParentDir}/mods`
-        await $`cp "${executableModsDir}/dedicated_server_mods_setup.lua" "${executableModsDir}/dedicated_server_mods_setup.lua.bak"`
-        await $`cp "${executableModsDir}/modsettings.lua" "${executableModsDir}/modsettings.lua.bak"`
 
         await Steam.steamUpdate({
             steamAppId: DoNotStarveTogetherPage.steamAppId,
@@ -126,18 +144,41 @@ class DoNotStarveTogetherPage extends GamePage<
             steamUsername: instance.steamUsername,
         })
 
-        await $`cp "${executableModsDir}/dedicated_server_mods_setup.lua.bak" "${executableModsDir}/dedicated_server_mods_setup.lua"`
-        await $`cp "${executableModsDir}/modsettings.lua.bak" "${executableModsDir}/modsettings.lua"`
-
+        console.log("! Checking for dependencies")
         await $`dpkg -l | grep libcurl4-gnutls-dev:i386 || sudo apt-get install -y libcurl4-gnutls-dev:i386`
+
+        const modoverridesLuaFilePath = `${instance.gameWorkingDirectoryPath}/${instance.name}-${instance.uuid}/Cluster_1/Master/modoverrides.lua`
+
+        if (fs.existsSync(modoverridesLuaFilePath)) {
+            console.log("! Configuring server mods")
+            this.configureRequiredMods(
+                `${instance.gameWorkingDirectoryPath}/${instance.name}-${instance.uuid}/Cluster_1/Master/modoverrides.lua`,
+                `${executableModsDir}/dedicated_server_mods_setup.lua`,
+            )
+
+            console.log("! Updating server mods")
+            await $({ cwd: DoNotStarveTogetherPage.executableBinDir })`${[
+                `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
+                `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
+                `-only_update_server_mods`,
+                `-ugc_directory '${instance.gameWorkingDirectoryPath}/ugc_mods'`,
+                `-persistent_storage_root '${instance.gameWorkingDirectoryPath}'`,
+                `-conf_dir ${instance.name}-${instance.uuid}`,
+                `-shard Master`,
+            ].join(" ")}`.pipe(new CarriageReturnWritableStream())
+        }
+
         await Screen.createScreen({
             metadata: instance,
             cwd: DoNotStarveTogetherPage.executableBinDir,
             screenArgs: [
                 `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
                 `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
+                `-skip_update_server_mods`,
+                `-ugc_directory '${instance.gameWorkingDirectoryPath}/ugc_mods'`,
                 `-persistent_storage_root '${instance.gameWorkingDirectoryPath}'`,
                 `-conf_dir ${instance.name}-${instance.uuid}`,
+                `-shard Master`,
             ],
         })
 
@@ -148,6 +189,8 @@ class DoNotStarveTogetherPage extends GamePage<
                 screenArgs: [
                     `LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu`,
                     `'${DoNotStarveTogetherPage.executablePath.replace(/'/g, "'\\''")}'`,
+                    `-skip_update_server_mods`,
+                    `-ugc_directory '${instance.gameWorkingDirectoryPath}/ugc_mods'`,
                     `-persistent_storage_root '${instance.gameWorkingDirectoryPath}'`,
                     `-conf_dir ${instance.name}-${instance.uuid}`,
                     `-shard Caves`,
