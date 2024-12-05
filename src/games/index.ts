@@ -1,13 +1,14 @@
 import { select, Separator } from "@inquirer/prompts"
 import { $ } from "zx/core"
 import Page from "../common/page"
+import doNotStarveTogetherPage from "./do-not-starve-together-page"
 import minecraftBedrockPage from "./minecraft-bedrock-page"
 import minecraftJavaPage from "./minecraft-java-page"
+import palworldPage from "./palworld-page"
 import terrariaPage from "./terraria-page"
 import theforestPage from "./theforest-page"
 import tmodloaderPage from "./tmodloader-page"
 import valheimPage from "./valheim-page"
-import doNotStarveTogetherPage from "./do-not-starve-together-page"
 
 $.quote = (str: string) => str
 $.quiet = true
@@ -50,6 +51,10 @@ class StartPage implements Page {
                         {
                             name: "Don't Starve Together",
                             value: doNotStarveTogetherPage,
+                        },
+                        {
+                            name: "Palworld",
+                            value: palworldPage,
                         },
                         {
                             name: "The Forest",

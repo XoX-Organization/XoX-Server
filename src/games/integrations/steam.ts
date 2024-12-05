@@ -8,12 +8,19 @@ export const steamPath = process.env.STEAM_PATH || "/usr/games/steamcmd"
 export const steamGlobalUsername = process.env.STEAM_USERNAME
 
 const _steamHomePath = [
+    `${os.homedir()}/.local/share/Steam/steamapps/common`,
+    `${os.homedir()}/.steam/root/steamapps/common`,
+    `${os.homedir()}/.steam/steam/steamapps/common`,
     `${os.homedir()}/.steam/SteamApps/common`,
     `${os.homedir()}/Steam/steamapps/common`,
 ]
 
 export const steamHomePath = () => {
-    return _steamHomePath.find((path) => fs.existsSync(path)) || ""
+    const found = _steamHomePath.find((path) => fs.existsSync(path))
+    if (!found) {
+        throw new Error("Steam Path not found")
+    }
+    return found
 }
 
 export const steamUpdate = async ({

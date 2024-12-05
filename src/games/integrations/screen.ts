@@ -1,13 +1,13 @@
 import { $ } from "zx/core"
 import { PersistedObject } from "../persistences"
 
-const nameScreen = <T extends PersistedObject>(metadata: T) => {
-    return `${metadata.name}-${metadata.uuid}`
+const nameScreen = <T extends PersistedObject>(metadata: T | string) => {
+    return typeof metadata === "string" ? metadata : `${metadata.name}-${metadata.uuid}`
 }
 
-export const existsScreen = async <T extends PersistedObject>(metadata: T) => {
+export const existsScreen = async <T extends PersistedObject>(metadata: T | string) => {
     const { stdout } = await $`screen -ls`.catch((reason) => reason)
-    return stdout.includes(nameScreen(metadata))
+    return stdout.includes(typeof metadata === "string" ? metadata : nameScreen(metadata))
 }
 
 export const createScreen = async <T extends PersistedObject>({
@@ -15,7 +15,7 @@ export const createScreen = async <T extends PersistedObject>({
     screenArgs,
     cwd,
 }: {
-    metadata: T
+    metadata: T | string
     screenArgs: string[]
     cwd?: string
 }) => {
@@ -25,7 +25,6 @@ export const createScreen = async <T extends PersistedObject>({
     if (screenArgs.some((arg) => arg.match(/"/))) {
         throw new Error(`Screen arguments contain illegal double quotes`)
     }
-
     const command = [
         cwd ? `cd "${cwd}";` : ``,
         `screen`,
@@ -44,6 +43,6 @@ export const createScreen = async <T extends PersistedObject>({
     await $`${command}`
 }
 
-export const attachScreen = async <T extends PersistedObject>(metadata: T) => {
-    await $`screen -r ${nameScreen(metadata)}`
+export const attachScreen = async <T extends PersistedObject>(metadata: T | string) => {
+    await $`screen -r ${typeof metadata === "string" ? metadata : nameScreen(metadata)}`
 }
