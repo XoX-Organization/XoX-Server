@@ -244,6 +244,9 @@ class MinecraftJavaPage extends GamePage<
                         :   "Type must be one of forge/neoforge/fabric"
                 },
                 callback: (value: string) => {
+                    if (metadata.game_modloader_type !== value.trim()) {
+                        metadata.game_modloader_version = ""
+                    }
                     metadata.game_modloader_type = value as "forge" | "neoforge" | "fabric"
                 },
             },
