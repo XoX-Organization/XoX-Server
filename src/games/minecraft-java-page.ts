@@ -16,7 +16,7 @@ interface MinecraftJavaPersistedSchema extends PersistedSchema {
 
     // Forge https://files.minecraftforge.net/net/minecraftforge/forge/
     // Fabric https://fabricmc.net/wiki/install
-    game_modloader_type: "forge" | "fabric"
+    game_modloader_type: "forge" | "neoforge" | "fabric"
     game_modloader_version: string
 
     // RAM in unit MB
@@ -57,11 +57,15 @@ class MinecraftJavaPage extends GamePage<
         19: 17,
         20: 21, // Supposed to be Java 17
         21: 21,
-        22: 21, // Followings are not released yet
+        22: 21,
         23: 21,
         24: 21,
         25: 21,
         26: 21,
+        27: 21,
+        28: 21,
+        29: 21,
+        30: 21,
     }
 
     protected persistence = new Persistence<
@@ -84,7 +88,7 @@ class MinecraftJavaPage extends GamePage<
     }
 
     private isVersionExists = async (
-        type: "minecraft" | "forge" | "fabric",
+        type: "minecraft" | "forge" | "neoforge" | "fabric",
         minecraftVersion: string,
         modloaderVersion?: string,
     ) => {
@@ -95,6 +99,12 @@ class MinecraftJavaPage extends GamePage<
                         `https://files.minecraftforge.net/net/minecraftforge/forge/index_${minecraftVersion}.html`,
                     )
                     return minecraftStatus === 200
+
+                case "neoforge":
+                    const { status: neoforgeStatus } = await axios.head(
+                        `https://maven.neoforged.net/releases/net/neoforged/neoforge/${modloaderVersion}/neoforge-${modloaderVersion}-installer.jar`,
+                    )
+                    return neoforgeStatus === 200
 
                 case "forge":
                     const { status: forgeStatus } = await axios.head(
@@ -118,10 +128,11 @@ class MinecraftJavaPage extends GamePage<
     }
 
     private retrieveVersion = async (
-        modloaderType: "forge" | "fabric",
+        modloaderType: "forge" | "neoforge" | "fabric",
         minecraftVersion: string,
     ) => {
         const forgeHomepage = `https://files.minecraftforge.net/net/minecraftforge/forge/index_${minecraftVersion}.html`
+        const neoforgeHomepage = `https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge`
         const fabricHomepage = `https://meta.fabricmc.net/v2/versions/loader`
 
         switch (modloaderType) {
@@ -139,6 +150,17 @@ class MinecraftJavaPage extends GamePage<
                     throw new Error(`Forge version not found for Minecraft ${minecraftVersion}`)
                 }
                 return forgeVersion
+
+            case "neoforge":
+                const { data: neoforgeData } = await axios.get(neoforgeHomepage)
+                const neoforgeVersion = (neoforgeData.versions as string[])
+                    .filter((version) =>
+                        version.startsWith(
+                            `${minecraftVersion.split(".")[1]}.${minecraftVersion.split(".")[2] ?? 0}`,
+                        ),
+                    )
+                    .at(-1)
+                return neoforgeVersion
 
             case "fabric":
                 const { data: fabricData } = await axios.get(fabricHomepage)
@@ -204,22 +226,25 @@ class MinecraftJavaPage extends GamePage<
                         :   "Version does not exist"
                 },
                 callback: (value: string) => {
+                    if (metadata.game_version !== value.trim()) {
+                        metadata.game_modloader_version = ""
+                    }
                     metadata.game_version = value.trim()
                 },
             },
             {
-                message: "Modloader Type (forge or fabric)",
+                message: "Modloader Type (forge/neoforge/fabric)",
                 default: metadata.game_modloader_type,
                 transformer: (value: string) => {
                     return value.toLowerCase()
                 },
                 validate: (value: string) => {
-                    return value === "forge" || value === "fabric" ?
+                    return value === "forge" || value === "neoforge" || value === "fabric" ?
                             true
-                        :   "Type must be forge or fabric"
+                        :   "Type must be one of forge/neoforge/fabric"
                 },
                 callback: (value: string) => {
-                    metadata.game_modloader_type = value as "forge" | "fabric"
+                    metadata.game_modloader_type = value as "forge" | "neoforge" | "fabric"
                 },
             },
         ]) {
@@ -240,9 +265,16 @@ class MinecraftJavaPage extends GamePage<
             {
                 message: [
                     `\u001b]8;;`,
-                    metadata.game_modloader_type === "forge" ?
-                        `https://files.minecraftforge.net/net/minecraftforge/forge/index_${metadata.game_version}.html`
-                    :   `https://meta.fabricmc.net/v2/versions/loader`,
+                    (() => {
+                        switch (metadata.game_modloader_type) {
+                            case "fabric":
+                                return `https://meta.fabricmc.net/v2/versions/loader`
+                            case "forge":
+                                return `https://files.minecraftforge.net/net/minecraftforge/forge/index_${metadata.game_version}.html`
+                            case "neoforge":
+                                return `https://projects.neoforged.net/neoforged/neoforge`
+                        }
+                    })(),
                     `\u0007`,
                     `Modloader Version (Leave empty for latest version, e.g. ${metadata.game_modloader_version})`,
                     `\u001b]8;;`,
@@ -312,10 +344,6 @@ class MinecraftJavaPage extends GamePage<
         const forgeInstallerJarUrl = `http://files.minecraftforge.net/maven/net/minecraftforge/forge/${metadata.gameVersion}-${metadata.gameModloaderVersion}/${forgeJarBaseFilename}-installer.jar`
         const forgeLegacyJarPath = `${metadata.gameWorkingDirectoryPath}/${forgeJarBaseFilename}.jar`
 
-        const fabricInstallerVersion = "1.0.0"
-        const fabricInstallerJarPath = `${metadata.gameWorkingDirectoryPath}/fabric-server-mc.${metadata.gameVersion}-loader.${metadata.gameModloaderVersion}-launcher.${fabricInstallerVersion}.jar`
-        const fabricInstallerJarUrl = `https://meta.fabricmc.net/v2/versions/loader/${metadata.gameVersion}/${metadata.gameModloaderVersion}/${fabricInstallerVersion}/server/jar`
-
         if (
             metadata.gameModloaderType === "forge" &&
             !(fs.existsSync(forgeUniversalJarPath) && fs.existsSync(forgeServerJarPath))
@@ -344,6 +372,44 @@ class MinecraftJavaPage extends GamePage<
             fs.rmSync(`${forgeInstallerJarPath}.log`)
         }
 
+        const neoforgeLibraryPath = `${metadata.gameWorkingDirectoryPath}/libraries/net/neoforged/neoforge/${metadata.gameModloaderVersion}`
+        const neoforgeJarBaseFilename = `neoforge-${metadata.gameModloaderVersion}`
+        const neoforgeServerJarPath = `${neoforgeLibraryPath}/${neoforgeJarBaseFilename}-server.jar`
+        const neoforgeUniversalJarPath = `${neoforgeLibraryPath}/${neoforgeJarBaseFilename}-universal.jar`
+        const neoforgeInstallerJarUrl = `https://maven.neoforged.net/releases/net/neoforged/neoforge/${metadata.gameModloaderVersion}/neoforge-${metadata.gameModloaderVersion}-installer.jar`
+        const neoforgeInstallerJarPath = `${metadata.gameWorkingDirectoryPath}/neoforge-${metadata.gameModloaderVersion}-installer.jar`
+
+        if (
+            metadata.gameModloaderType === "neoforge" &&
+            !(fs.existsSync(neoforgeUniversalJarPath) && fs.existsSync(neoforgeServerJarPath))
+        ) {
+            if (process.env.NODE_ENV === "development") {
+                console.debug("& NeoForge Server Jar Path:", neoforgeServerJarPath)
+                console.debug("& NeoForge Universal Jar Path:", neoforgeUniversalJarPath)
+                console.debug("& NeoForge Installer Jar Path:", neoforgeInstallerJarPath)
+                console.debug("& NeoForge Installer Jar URL:", neoforgeInstallerJarUrl)
+            }
+            if (!fs.existsSync(neoforgeInstallerJarPath)) {
+                console.log("! Downloading NeoForge Installer Jar")
+                await Utilities.download(neoforgeInstallerJarUrl, neoforgeInstallerJarPath)
+            }
+            console.log("! Installing NeoForge Library")
+
+            const java = this.setupJava(metadata)
+
+            await $({
+                cwd: metadata.gameWorkingDirectoryPath,
+            })`${java} -jar ${neoforgeInstallerJarPath} --installServer`.pipe(
+                new Utilities.CarriageReturnWritableStream(),
+            )
+            fs.rmSync(neoforgeInstallerJarPath)
+            fs.rmSync(`${neoforgeInstallerJarPath}.log`)
+        }
+
+        const fabricInstallerVersion = "1.0.0"
+        const fabricInstallerJarPath = `${metadata.gameWorkingDirectoryPath}/fabric-server-mc.${metadata.gameVersion}-loader.${metadata.gameModloaderVersion}-launcher.${fabricInstallerVersion}.jar`
+        const fabricInstallerJarUrl = `https://meta.fabricmc.net/v2/versions/loader/${metadata.gameVersion}/${metadata.gameModloaderVersion}/${fabricInstallerVersion}/server/jar`
+
         if (metadata.gameModloaderType === "fabric" && !fs.existsSync(fabricInstallerJarPath)) {
             if (process.env.NODE_ENV === "development") {
                 console.debug("& Fabric Installer Jar Path:", fabricInstallerJarPath)
@@ -359,6 +425,7 @@ class MinecraftJavaPage extends GamePage<
             forgeUniversalJarPath,
             forgeShimJarPath,
             forgeLegacyJarPath,
+            neoforgeLibraryPath,
             fabricInstallerJarPath,
         }
     }
@@ -405,8 +472,13 @@ class MinecraftJavaPage extends GamePage<
     }
 
     protected performStartupInitialization = async (instance: MinecraftJavaPersistedObject) => {
-        const { forgeLibraryPath, forgeLegacyJarPath, forgeShimJarPath, fabricInstallerJarPath } =
-            await this.setupModloader(instance)
+        const {
+            forgeLibraryPath,
+            forgeLegacyJarPath,
+            forgeShimJarPath,
+            neoforgeLibraryPath,
+            fabricInstallerJarPath,
+        } = await this.setupModloader(instance)
 
         if (!(await this.signEula(instance))) {
             return
@@ -418,27 +490,48 @@ class MinecraftJavaPage extends GamePage<
             metadata: instance,
             cwd: instance.gameWorkingDirectoryPath,
             screenArgs: [
-                ...(instance.gameModloaderType === "forge" && fs.existsSync(forgeShimJarPath) ?
-                    [java, `-jar`, forgeShimJarPath, `--onlyCheckJava ||`, `exit 1;`]
-                :   []),
+                ...(() => {
+                    switch (instance.gameModloaderType) {
+                        case "forge":
+                            if (fs.existsSync(forgeShimJarPath)) {
+                                return [
+                                    java,
+                                    `-jar`,
+                                    forgeShimJarPath,
+                                    `--onlyCheckJava ||`,
+                                    `exit 1;`,
+                                ]
+                            }
+                        default:
+                            return []
+                    }
+                })(),
+
                 java,
                 `-server`,
                 `-Xmx${instance.gameMaxRam}M`,
                 `-Xms${instance.gameMinRam}M`,
-                ...((
-                    instance.gameModloaderType === "fabric" ||
-                    (instance.gameModloaderType === "forge" && fs.existsSync(forgeLegacyJarPath))
-                ) ?
-                    [
-                        `-jar`,
-                        instance.gameModloaderType === "forge" ?
-                            forgeLegacyJarPath
-                        :   fabricInstallerJarPath,
-                    ]
-                :   [
-                        `@${instance.gameWorkingDirectoryPath}/user_jvm_args.txt`,
-                        `@${forgeLibraryPath}/unix_args.txt`,
-                    ]),
+
+                ...(() => {
+                    switch (instance.gameModloaderType) {
+                        case "fabric":
+                            return [`-jar`, fabricInstallerJarPath]
+                        case "forge":
+                            if (fs.existsSync(forgeLegacyJarPath)) {
+                                return [`-jar`, forgeLegacyJarPath]
+                            }
+                            return [
+                                `@${instance.gameWorkingDirectoryPath}/user_jvm_args.txt`,
+                                `@${forgeLibraryPath}/unix_args.txt`,
+                            ]
+                        case "neoforge":
+                            return [
+                                `@${instance.gameWorkingDirectoryPath}/user_jvm_args.txt`,
+                                `@${neoforgeLibraryPath}/unix_args.txt`,
+                            ]
+                    }
+                })(),
+
                 `nogui`,
             ],
         })
