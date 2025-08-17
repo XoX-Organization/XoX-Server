@@ -154,7 +154,7 @@ abstract class GamePage<T extends PersistedSchema, U extends PersistedObject<T>>
                             await Screen.attachScreen(availableInstances[selectInstance])
                         }
                     }
-                    break
+                    process.exit(0)
             }
             continue
         }
