@@ -108,7 +108,7 @@ class MinecraftJavaPage extends GamePage<
 
                 case "forge":
                     const { status: forgeStatus } = await axios.head(
-                        `https://maven.minecraftforge.net/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}/forge-${minecraftVersion}-${modloaderVersion}-installer.jar`,
+                        `https://maven.minecraftforge.net/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}`,
                     )
                     return forgeStatus === 203
 
@@ -344,7 +344,7 @@ class MinecraftJavaPage extends GamePage<
         const forgeUniversalJarPath = `${forgeLibraryPath}/${forgeJarBaseFilename}-universal.jar`
         const forgeShimJarPath = `${metadata.gameWorkingDirectoryPath}/${forgeJarBaseFilename}-shim.jar`
         const forgeInstallerJarPath = `${metadata.gameWorkingDirectoryPath}/${forgeJarBaseFilename}-installer.jar`
-        const forgeInstallerJarUrl = `http://files.minecraftforge.net/maven/net/minecraftforge/forge/${metadata.gameVersion}-${metadata.gameModloaderVersion}/${forgeJarBaseFilename}-installer.jar`
+        const forgeInstallerJarUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/${metadata.gameVersion}-${metadata.gameModloaderVersion}/${forgeJarBaseFilename}-installer.jar`
         const forgeLegacyJarPath = `${metadata.gameWorkingDirectoryPath}/${forgeJarBaseFilename}.jar`
 
         if (
