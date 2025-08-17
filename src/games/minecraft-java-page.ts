@@ -108,9 +108,9 @@ class MinecraftJavaPage extends GamePage<
 
                 case "forge":
                     const { status: forgeStatus } = await axios.head(
-                        `https://maven.minecraftforge.net/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}`,
+                        `https://maven.minecraftforge.net/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}/forge-${minecraftVersion}-${modloaderVersion}-installer.jar`,
                     )
-                    return forgeStatus === 203
+                    return forgeStatus === 200
 
                 case "fabric":
                     const { data: fabricData } = await axios.get(
@@ -122,7 +122,10 @@ class MinecraftJavaPage extends GamePage<
                 default:
                     return false
             }
-        } catch {
+        } catch (err) {
+            if (process.env.NODE_ENV === "development") {
+                console.debug(err)
+            }
             return false
         }
     }
