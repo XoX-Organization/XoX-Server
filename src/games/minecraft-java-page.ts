@@ -108,7 +108,7 @@ class MinecraftJavaPage extends GamePage<
 
                 case "forge":
                     const { status: forgeStatus } = await axios.head(
-                        `http://files.minecraftforge.net/maven/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}`,
+                        `https://maven.minecraftforge.net/net/minecraftforge/forge/${minecraftVersion}-${modloaderVersion}/forge-${minecraftVersion}-${modloaderVersion}-installer.jar`,
                     )
                     return forgeStatus === 203
 
