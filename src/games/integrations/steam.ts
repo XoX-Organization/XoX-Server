@@ -20,7 +20,8 @@ export const steamHomePath = () => {
     if (!found) {
         throw new Error("Steam Path not found")
     }
-    return `${found}/steamapps/common`
+    const parentPath = found.split("/").slice(0, -1).join("/")
+    return `${parentPath}/steamapps/common`
 }
 
 export const steamUpdate = async ({
